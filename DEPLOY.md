@@ -1,15 +1,8 @@
 # Guia de Deploy - Colify/Railway
 
-## ⚠️ Importante sobre PostgreSQL
+## 🗄️ Banco de Dados: MongoDB
 
-O código atual usa **Mongoose** que é específico para **MongoDB**. Para usar PostgreSQL no Colify, você tem duas opções:
-
-### Opção 1: Usar MongoDB no Colify (Recomendado)
-- Configure um serviço MongoDB (MongoDB Atlas gratuito ou serviço do Colify)
-- Use a variável `MONGODB_URI` normalmente
-
-### Opção 2: Migrar para PostgreSQL
-Se você realmente precisa usar PostgreSQL, será necessário migrar o código para usar **Sequelize** ou **Prisma** ao invés de Mongoose.
+Este projeto usa **MongoDB** com **Mongoose**. Recomendamos usar **MongoDB Atlas** (gratuito) para produção.
 
 ## 📋 Configuração no Colify
 
@@ -22,11 +15,8 @@ Configure as seguintes variáveis no painel do Colify:
 PORT=5000
 NODE_ENV=production
 
-# Database
-# Para MongoDB:
+# Database - MongoDB Atlas
 MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/fortune-bet
-# OU para PostgreSQL:
-DATABASE_URL=postgresql://user:password@host:port/database
 
 # JWT
 JWT_SECRET=seu-jwt-secret-super-seguro-aqui
@@ -50,29 +40,37 @@ WEBHOOK_BASE_URL=https://seu-backend.colify.app
 - Build Command: `cd chinesa-main && npm install && npm run build`
 - Start Command: `cd chinesa-main && npm run preview`
 
-## 🔧 Configuração do Banco de Dados
+## 🔧 Configuração do MongoDB Atlas
 
-### MongoDB (Recomendado)
+### Passo a Passo
 
-1. Crie uma conta no [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
-2. Crie um cluster gratuito
-3. Obtenha a connection string
-4. Configure `MONGODB_URI` no Colify
+1. **Crie uma conta gratuita** no [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
 
-### PostgreSQL (Requer Migração)
+2. **Crie um Cluster Gratuito:**
+   - Escolha "Free" (M0)
+   - Escolha a região mais próxima
+   - Aguarde a criação (pode levar alguns minutos)
 
-Se você escolher PostgreSQL, precisará:
+3. **Configure o acesso:**
+   - Vá em "Database Access"
+   - Crie um usuário com senha forte
+   - Anote o usuário e senha
 
-1. Instalar Sequelize ou Prisma
-2. Migrar os modelos de Mongoose para Sequelize/Prisma
-3. Atualizar todas as rotas e serviços
+4. **Configure a Network Access:**
+   - Vá em "Network Access"
+   - Adicione `0.0.0.0/0` para permitir acesso de qualquer IP
+   - Ou adicione o IP específico do Colify
 
-**Exemplo com Sequelize:**
+5. **Obtenha a Connection String:**
+   - Vá em "Database" > "Connect"
+   - Escolha "Connect your application"
+   - Copie a connection string
+   - Substitua `<password>` pela senha do usuário criado
+   - Substitua `<dbname>` por `fortune-bet` (ou o nome que preferir)
 
-```bash
-cd backend
-npm install sequelize pg pg-hstore
-```
+6. **Configure no Colify:**
+   - Adicione a variável `MONGODB_URI` com a connection string completa
+   - Exemplo: `mongodb+srv://usuario:senha@cluster0.xxxxx.mongodb.net/fortune-bet?retryWrites=true&w=majority`
 
 ## 🌐 Webhooks
 
@@ -96,11 +94,13 @@ WEBHOOK_BASE_URL=https://fortune-bet-backend.colify.app
 
 ## 🐛 Troubleshooting
 
-### Erro de conexão com banco
+### Erro de conexão com MongoDB
 
-- Verifique se a URL do banco está correta
-- Verifique se o banco permite conexões externas
-- Verifique firewall/whitelist do banco
+- Verifique se a `MONGODB_URI` está correta
+- Verifique se substituiu `<password>` e `<dbname>` na connection string
+- Verifique se o IP do Colify está na whitelist do MongoDB Atlas
+- Verifique se o usuário tem permissões adequadas
+- Teste a connection string localmente primeiro
 
 ### Webhooks não funcionam
 

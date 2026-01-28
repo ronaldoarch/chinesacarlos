@@ -2,7 +2,14 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
 class ApiService {
   constructor() {
-    this.baseURL = API_BASE_URL
+    // Ensure API_BASE_URL ends with /api
+    let baseURL = API_BASE_URL
+    if (!baseURL.endsWith('/api')) {
+      // Remove trailing slash if present, then add /api
+      baseURL = baseURL.replace(/\/$/, '') + '/api'
+    }
+    this.baseURL = baseURL
+    console.log('🔗 API Base URL:', this.baseURL) // Debug log
   }
 
   async request(endpoint, options = {}) {

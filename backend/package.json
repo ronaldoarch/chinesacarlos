@@ -9,6 +9,7 @@
     "start": "node server.js",
     "create-admin": "node scripts/createAdmin.js",
     "list-users": "node scripts/listUsers.js",
+    "check-user": "node scripts/checkUser.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": ["api", "betting", "fortune"],

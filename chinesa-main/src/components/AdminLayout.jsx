@@ -61,11 +61,25 @@ function AdminLayout() {
           <i className="fa-solid fa-lock"></i>
           <h2>Acesso Negado</h2>
           <p>Você não tem permissão para acessar o painel administrativo.</p>
-          <p style={{ marginTop: '10px', fontSize: '14px', opacity: 0.8 }}>
-            Usuário logado: <strong>{user?.username}</strong> (Role: <strong>{user?.role || 'user'}</strong>)
+          <div style={{ marginTop: '20px', padding: '15px', backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: '8px', textAlign: 'left' }}>
+            <p style={{ fontSize: '14px', opacity: 0.9, marginBottom: '8px' }}>
+              <strong>Usuário logado:</strong> {user?.username || 'N/A'}
+            </p>
+            <p style={{ fontSize: '14px', opacity: 0.9, marginBottom: '8px' }}>
+              <strong>Role atual:</strong> <span style={{ color: user?.role === 'admin' || user?.role === 'superadmin' ? '#10b981' : '#ef4444' }}>{user?.role || 'user'}</span>
+            </p>
+            <p style={{ fontSize: '14px', opacity: 0.9 }}>
+              <strong>Role necessário:</strong> admin ou superadmin
+            </p>
+          </div>
+          <p style={{ marginTop: '20px', fontSize: '14px', opacity: 0.8 }}>
+            Para tornar este usuário admin, execute no terminal do Colify:
           </p>
-          <p style={{ marginTop: '10px', fontSize: '14px', opacity: 0.8 }}>
-            Para acessar, você precisa ter role <strong>admin</strong> ou <strong>superadmin</strong>.
+          <div style={{ marginTop: '10px', padding: '10px', backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: '8px', fontFamily: 'monospace', fontSize: '12px' }}>
+            npm run create-admin {user?.username || 'username'} admin
+          </div>
+          <p style={{ marginTop: '15px', fontSize: '12px', opacity: 0.7 }}>
+            Depois, faça logout e login novamente para atualizar o token.
           </p>
           <button
             type="button"

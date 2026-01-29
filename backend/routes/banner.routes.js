@@ -108,7 +108,9 @@ router.post('/admin', protect, isAdmin, upload.single('image'), async (req, res)
       })
     }
 
-    const imageUrl = `/uploads/${req.file.filename}`
+    // Use absolute URL if API_URL is set, otherwise relative path
+    const baseUrl = process.env.API_URL || ''
+    const imageUrl = baseUrl ? `${baseUrl}/uploads/${req.file.filename}` : `/uploads/${req.file.filename}`
 
     const banner = await Banner.create({
       title: title || 'Banner',
@@ -158,7 +160,8 @@ router.put('/admin/:id', protect, isAdmin, upload.single('image'), async (req, r
 
     // Update image if new one uploaded
     if (req.file) {
-      updateData.imageUrl = `/uploads/${req.file.filename}`
+      const baseUrl = process.env.API_URL || ''
+      updateData.imageUrl = baseUrl ? `${baseUrl}/uploads/${req.file.filename}` : `/uploads/${req.file.filename}`
     }
 
     const updatedBanner = await Banner.findByIdAndUpdate(
@@ -246,7 +249,8 @@ router.post('/admin/logo', protect, isAdmin, upload.single('logo'), async (req, 
       })
     }
 
-    const imageUrl = `/uploads/${req.file.filename}`
+    const baseUrl = process.env.API_URL || ''
+    const imageUrl = baseUrl ? `${baseUrl}/uploads/${req.file.filename}` : `/uploads/${req.file.filename}`
 
     // Deactivate all existing logos
     await Logo.updateMany({}, { isActive: false })

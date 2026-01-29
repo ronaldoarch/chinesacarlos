@@ -2,7 +2,12 @@ import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import dotenv from 'dotenv'
+import path from 'path'
+import { fileURLToPath } from 'url'
 import connectDB from './config/database.js'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 import authRoutes from './routes/auth.routes.js'
 import paymentRoutes from './routes/payment.routes.js'
 import webhookRoutes from './routes/webhook.routes.js'
@@ -36,6 +41,11 @@ app.use(cors({
 }))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
+
+// Serve static files from frontend public folder (for uploaded images)
+const publicPath = path.join(__dirname, '../chinesa-main/public')
+app.use('/uploads', express.static(path.join(publicPath, 'uploads')))
+app.use(express.static(publicPath))
 
 // Routes
 app.use('/api/auth', authRoutes)

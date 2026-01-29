@@ -2,6 +2,21 @@ import React, { useEffect, useState } from 'react'
 import api from '../../services/api'
 import './AdminBanners.css'
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+const getImageUrl = (imagePath) => {
+  if (!imagePath) return ''
+  // If already a full URL, return as is
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    return imagePath
+  }
+  // If starts with /uploads, use API base URL (without /api)
+  if (imagePath.startsWith('/uploads')) {
+    const baseUrl = API_BASE_URL.replace('/api', '')
+    return `${baseUrl}${imagePath}`
+  }
+  return imagePath
+}
+
 function AdminBanners() {
   const [banners, setBanners] = useState([])
   const [logo, setLogo] = useState(null)
@@ -198,7 +213,7 @@ function AdminBanners() {
           </div>
           {logo && (
             <div className="logo-preview">
-              <img src={logo.imageUrl} alt={logo.altText} />
+              <img src={getImageUrl(logo.imageUrl)} alt={logo.altText} />
               <p>Logo atual</p>
             </div>
           )}
@@ -229,7 +244,7 @@ function AdminBanners() {
               {banners.map((banner) => (
                 <div key={banner._id} className="banner-card">
                   <div className="banner-image">
-                    <img src={banner.imageUrl} alt={banner.title} />
+                    <img src={getImageUrl(banner.imageUrl)} alt={banner.title} />
                     {!banner.isActive && (
                       <div className="banner-inactive-badge">Inativo</div>
                     )}
@@ -293,7 +308,7 @@ function AdminBanners() {
                 )}
                 {logo && !logoImage && (
                   <div className="image-preview">
-                    <img src={logo.imageUrl} alt="Logo atual" />
+                    <img src={getImageUrl(logo.imageUrl)} alt="Logo atual" />
                   </div>
                 )}
               </div>
@@ -355,7 +370,7 @@ function AdminBanners() {
                 )}
                 {editingBanner && !bannerImage && (
                   <div className="image-preview">
-                    <img src={editingBanner.imageUrl} alt="Banner atual" />
+                    <img src={getImageUrl(editingBanner.imageUrl)} alt="Banner atual" />
                     <p className="image-note">Deixe em branco para manter a imagem atual</p>
                   </div>
                 )}

@@ -2,6 +2,21 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import api from '../services/api'
 import './BonusBanner.css'
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+const getImageUrl = (imagePath) => {
+  if (!imagePath) return ''
+  // If already a full URL, return as is
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    return imagePath
+  }
+  // If starts with /uploads, use API base URL (without /api)
+  if (imagePath.startsWith('/uploads')) {
+    const baseUrl = API_BASE_URL.replace('/api', '')
+    return `${baseUrl}${imagePath}`
+  }
+  return imagePath
+}
+
 function BonusBanner() {
   const [banners, setBanners] = useState([])
   const [loading, setLoading] = useState(true)
@@ -182,10 +197,10 @@ function BonusBanner() {
             >
               {slide.linkUrl ? (
                 <a href={slide.linkUrl} target="_blank" rel="noopener noreferrer">
-                  <img src={slide.src} alt={slide.alt} className="banner-img-full" loading="lazy" />
+                  <img src={getImageUrl(slide.src)} alt={slide.alt} className="banner-img-full" loading="lazy" />
                 </a>
               ) : (
-                <img src={slide.src} alt={slide.alt} className="banner-img-full" loading="lazy" />
+                <img src={getImageUrl(slide.src)} alt={slide.alt} className="banner-img-full" loading="lazy" />
               )}
             </div>
           ))}

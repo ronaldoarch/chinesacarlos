@@ -2,6 +2,21 @@ import React, { useEffect, useState } from 'react'
 import api from '../services/api'
 import './Header.css'
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+const getImageUrl = (imagePath) => {
+  if (!imagePath) return '/logo_plataforma.png'
+  // If already a full URL, return as is
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    return imagePath
+  }
+  // If starts with /uploads, use API base URL (without /api)
+  if (imagePath.startsWith('/uploads')) {
+    const baseUrl = API_BASE_URL.replace('/api', '')
+    return `${baseUrl}${imagePath}`
+  }
+  return imagePath
+}
+
 function Header({
   onRegisterClick,
   onLoginClick,
@@ -58,7 +73,7 @@ function Header({
           </g>
         </svg>
         <a href="#" className="logo-link">
-          <img src={logoUrl} alt="Logo" className="logo-img" loading="lazy" />
+          <img src={getImageUrl(logoUrl)} alt="Logo" className="logo-img" loading="lazy" />
         </a>
       </div>
       <div className={`header-right${isLoggedIn ? ' is-logged-in' : ''}`}>

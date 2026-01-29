@@ -34,18 +34,37 @@ app.set('trust proxy', true)
 connectDB()
 
 // Middleware
-app.use(helmet())
+// Configure helmet to allow images and static files
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  crossOriginEmbedderPolicy: false
+}))
+
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true
 }))
+
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
 // Serve static files from frontend public folder (for uploaded images)
+// IMPORTANT: Serve static files BEFORE routes to avoid conflicts
 const publicPath = path.join(__dirname, '../chinesa-main/public')
-app.use('/uploads', express.static(path.join(publicPath, 'uploads')))
-app.use(express.static(publicPath))
+app.use('/uploads', express.static(path.join(publicPath, 'uploads'), {
+  setHeaders: (res, path) => {
+    res.set('Cross-Origin-Resource-Policy', 'cross-origin')
+    res.set('Access-Control-Allow-Origin', '*')
+  }
+}))
+app.use(express.static(publicPath, {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg') || path.endsWith('.gif') || path.endsWith('.webp')) {
+      res.set('Cross-Origin-Resource-Policy', 'cross-origin')
+      res.set('Access-Control-Allow-Origin', '*')
+    }
+  }
+}))
 
 // Routes
 app.use('/api/auth', authRoutes)

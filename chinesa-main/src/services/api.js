@@ -203,6 +203,26 @@ class ApiService {
       body: JSON.stringify({ amount })
     })
   }
+
+  // Gateway endpoints
+  async getGatewayConfig() {
+    return this.request('/gateway/config', {
+      method: 'GET'
+    })
+  }
+
+  async updateGatewayConfig(configData) {
+    return this.request('/gateway/config', {
+      method: 'PUT',
+      body: JSON.stringify(configData)
+    })
+  }
+
+  async testGateway() {
+    return this.request('/gateway/test', {
+      method: 'POST'
+    })
+  }
 }
 
 export default new ApiService()

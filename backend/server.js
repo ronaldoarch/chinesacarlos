@@ -8,6 +8,7 @@ import paymentRoutes from './routes/payment.routes.js'
 import webhookRoutes from './routes/webhook.routes.js'
 import adminRoutes from './routes/admin.routes.js'
 import gamesRoutes from './routes/games.routes.js'
+import gatewayRoutes from './routes/gateway.routes.js'
 import { errorHandler } from './middleware/errorHandler.js'
 
 // Load environment variables
@@ -37,6 +38,7 @@ app.use('/api/payments', paymentRoutes)
 app.use('/api/webhooks', webhookRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/games', gamesRoutes)
+app.use('/api/gateway', gatewayRoutes)
 
 // Health check
 app.get('/api/health', (req, res) => {

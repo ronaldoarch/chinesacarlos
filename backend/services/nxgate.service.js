@@ -1,4 +1,5 @@
 import axios from 'axios'
+import GatewayConfig from '../models/GatewayConfig.model.js'
 
 const NXGATE_API_URL = 'https://api.nxgate.com.br'
 const NXGATE_API_KEY = process.env.NXGATE_API_KEY || 'd6fd1a0ed8daf4b33754d9f7d494d697'
@@ -8,6 +9,21 @@ class NxgateService {
   constructor() {
     this.apiKey = NXGATE_API_KEY
     this.baseURL = NXGATE_API_URL
+    this.webhookBaseUrl = WEBHOOK_BASE_URL
+  }
+
+  async getConfig() {
+    try {
+      const config = await GatewayConfig.getConfig()
+      if (config && config.isActive) {
+        this.apiKey = config.apiKey || this.apiKey
+        this.baseURL = config.apiUrl || this.baseURL
+        this.webhookBaseUrl = config.webhookBaseUrl || this.webhookBaseUrl
+      }
+    } catch (error) {
+      console.error('Error loading gateway config:', error)
+      // Use defaults from env
+    }
   }
 
   /**
@@ -21,12 +37,13 @@ class NxgateService {
    */
   async generatePix(data) {
     try {
+      await this.getConfig()
       const payload = {
         nome_pagador: data.nome_pagador,
         documento_pagador: data.documento_pagador,
         valor: parseFloat(data.valor).toFixed(2),
         api_key: this.apiKey,
-        webhook: data.webhook || `${WEBHOOK_BASE_URL}/api/webhooks/pix`
+        webhook: data.webhook || `${this.webhookBaseUrl}/api/webhooks/pix`
       }
 
       const response = await axios.post(`${this.baseURL}/pix/gerar`, payload, {
@@ -62,13 +79,14 @@ class NxgateService {
    */
   async withdrawPix(data) {
     try {
+      await this.getConfig()
       const payload = {
         api_key: this.apiKey,
         valor: parseFloat(data.valor).toFixed(2),
         chave_pix: data.chave_pix,
         tipo_chave: data.tipo_chave,
         documento: data.documento,
-        webhook: data.webhook || `${WEBHOOK_BASE_URL}/api/webhooks/pix-withdraw`
+        webhook: data.webhook || `${this.webhookBaseUrl}/api/webhooks/pix-withdraw`
       }
 
       const response = await axios.post(`${this.baseURL}/pix/sacar`, payload, {

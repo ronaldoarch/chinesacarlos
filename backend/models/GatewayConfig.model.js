@@ -1,0 +1,40 @@
+import mongoose from 'mongoose'
+
+const gatewayConfigSchema = new mongoose.Schema(
+  {
+    apiKey: {
+      type: String,
+      required: true
+    },
+    webhookBaseUrl: {
+      type: String,
+      required: true
+    },
+    apiUrl: {
+      type: String,
+      default: 'https://api.nxgate.com.br'
+    },
+    isActive: {
+      type: Boolean,
+      default: true
+    }
+  },
+  {
+    timestamps: true
+  }
+)
+
+// Ensure only one config exists
+gatewayConfigSchema.statics.getConfig = async function() {
+  let config = await this.findOne()
+  if (!config) {
+    config = await this.create({
+      apiKey: process.env.NXGATE_API_KEY || '',
+      webhookBaseUrl: process.env.WEBHOOK_BASE_URL || 'http://localhost:5000',
+      apiUrl: 'https://api.nxgate.com.br'
+    })
+  }
+  return config
+}
+
+export default mongoose.model('GatewayConfig', gatewayConfigSchema)

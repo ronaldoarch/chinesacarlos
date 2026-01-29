@@ -4,6 +4,7 @@ import AdminDashboard from '../pages/admin/AdminDashboard'
 import AdminUsers from '../pages/admin/AdminUsers'
 import AdminTransactions from '../pages/admin/AdminTransactions'
 import AdminGamesConfig from '../pages/admin/AdminGamesConfig'
+import AdminGatewayConfig from '../pages/admin/AdminGatewayConfig'
 import './AdminLayout.css'
 
 function AdminLayout() {
@@ -172,6 +173,8 @@ function AdminLayout() {
         return <AdminTransactions />
       case 'games':
         return <AdminGamesConfig />
+      case 'gateway':
+        return <AdminGatewayConfig />
       default:
         return <AdminDashboard />
     }
@@ -221,6 +224,15 @@ function AdminLayout() {
             >
               <i className="fa-solid fa-gamepad"></i>
               <span>Jogos</span>
+            </button>
+          </li>
+          <li>
+            <button
+              className={activePage === 'gateway' ? 'active' : ''}
+              onClick={() => setActivePage('gateway')}
+            >
+              <i className="fa-solid fa-credit-card"></i>
+              <span>Gateway</span>
             </button>
           </li>
         </ul>

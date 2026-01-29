@@ -38,9 +38,17 @@ const gameConfigSchema = new mongoose.Schema(
       default: [],
       validate: {
         validator: function(v) {
-          return v.length <= 15
+          // Validate 15 games per provider
+          const gamesByProvider = {}
+          for (const game of v) {
+            gamesByProvider[game.providerCode] = (gamesByProvider[game.providerCode] || 0) + 1
+            if (gamesByProvider[game.providerCode] > 15) {
+              return false
+            }
+          }
+          return true
         },
-        message: 'Máximo de 15 jogos permitidos'
+        message: 'Máximo de 15 jogos por provedor permitidos'
       }
     },
     isActive: {

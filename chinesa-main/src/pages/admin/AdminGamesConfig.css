@@ -138,6 +138,13 @@
   gap: var(--spacing-sm);
 }
 
+.games-count {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-normal);
+  margin-left: var(--spacing-xs);
+}
+
 .games-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));

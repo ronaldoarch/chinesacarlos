@@ -56,11 +56,16 @@ router.put('/config', protect, isAdmin, async (req, res) => {
       config.selectedProviders = selectedProviders
     }
     if (selectedGames) {
-      if (selectedGames.length > 15) {
-        return res.status(400).json({
-          success: false,
-          message: 'Máximo de 15 jogos permitidos'
-        })
+      // Validate 15 games per provider
+      const gamesByProvider = {}
+      for (const game of selectedGames) {
+        gamesByProvider[game.providerCode] = (gamesByProvider[game.providerCode] || 0) + 1
+        if (gamesByProvider[game.providerCode] > 15) {
+          return res.status(400).json({
+            success: false,
+            message: `Máximo de 15 jogos permitidos por provedor. O provedor ${game.providerCode} tem ${gamesByProvider[game.providerCode]} jogos selecionados.`
+          })
+        }
       }
       config.selectedGames = selectedGames
     }

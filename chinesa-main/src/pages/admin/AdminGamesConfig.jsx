@@ -75,8 +75,8 @@ function AdminGamesConfig() {
     }
   }
 
-  const loadGames = async (providerCode) => {
-    if (gamesByProvider[providerCode]) {
+  const loadGames = async (providerCode, forceReload = false) => {
+    if (!forceReload && gamesByProvider[providerCode]) {
       return // Already loaded
     }
 
@@ -119,9 +119,13 @@ function AdminGamesConfig() {
         selectedProviders: [...prev.selectedProviders, providerCode]
       }))
       
-      // Load games for this provider
-      await loadGames(providerCode)
+      // Load games for this provider automatically
+      await loadGames(providerCode, true)
     }
+  }
+
+  const getGamesCountByProvider = (providerCode) => {
+    return config.selectedGames.filter(g => g.providerCode === providerCode).length
   }
 
   const handleGameToggle = (game) => {
@@ -137,8 +141,10 @@ function AdminGamesConfig() {
         )
       }))
     } else {
-      if (config.selectedGames.length >= 15) {
-        setError('Máximo de 15 jogos permitidos')
+      // Check limit per provider (15 games per provider)
+      const currentCount = getGamesCountByProvider(game.providerCode)
+      if (currentCount >= 15) {
+        setError(`Máximo de 15 jogos permitidos por provedor. O provedor ${game.providerCode} já tem 15 jogos selecionados.`)
         setTimeout(() => setError(null), 3000)
         return
       }
@@ -304,21 +310,23 @@ function AdminGamesConfig() {
         <div className="config-section">
           <h2>
             <i className="fa-solid fa-dice"></i>
-            Jogos Selecionados ({config.selectedGames.length}/15)
+            Jogos Selecionados
           </h2>
           <p className="section-description">
-            Selecione até 15 jogos dos provedores escolhidos
+            Selecione até 15 jogos por provedor
           </p>
 
           {config.selectedProviders.map(providerCode => {
             const provider = providers.find(p => p.code === providerCode)
             const games = gamesByProvider[providerCode] || []
             const isLoading = loadingGames[providerCode]
+            const gamesCount = getGamesCountByProvider(providerCode)
 
             return (
               <div key={providerCode} className="games-provider-section">
                 <h3>
                   {provider?.name || providerCode}
+                  <span className="games-count">({gamesCount}/15)</span>
                   {isLoading && <i className="fa-solid fa-spinner fa-spin"></i>}
                 </h3>
                 

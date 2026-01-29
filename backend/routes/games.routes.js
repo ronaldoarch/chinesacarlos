@@ -148,11 +148,42 @@ router.get('/games/:providerCode', protect, isAdmin, async (req, res) => {
 router.get('/selected', async (req, res) => {
   try {
     const config = await GameConfig.getConfig()
+    
+    // Get provider names
+    let providerNames = {}
+    if (config.selectedProviders.length > 0) {
+      try {
+        const providersResponse = await igamewinService.getProviderList()
+        if (providersResponse.status === 1 && providersResponse.providers) {
+          providersResponse.providers.forEach(provider => {
+            providerNames[provider.code] = provider.name
+          })
+        }
+      } catch (err) {
+        console.error('Error fetching provider names:', err)
+      }
+    }
+    
+    // Group games by provider
+    const gamesByProvider = {}
+    config.selectedGames.forEach(game => {
+      if (!gamesByProvider[game.providerCode]) {
+        gamesByProvider[game.providerCode] = []
+      }
+      gamesByProvider[game.providerCode].push(game)
+    })
+    
+    // Build providers array with their games
+    const providersData = config.selectedProviders.map(providerCode => ({
+      code: providerCode,
+      name: providerNames[providerCode] || providerCode,
+      games: gamesByProvider[providerCode] || []
+    }))
+    
     res.json({
       success: true,
       data: {
-        providers: config.selectedProviders,
-        games: config.selectedGames
+        providers: providersData
       }
     })
   } catch (error) {

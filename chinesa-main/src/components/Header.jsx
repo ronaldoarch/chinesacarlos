@@ -1,4 +1,5 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
+import api from '../services/api'
 import './Header.css'
 
 function Header({
@@ -10,7 +11,24 @@ function Header({
   isLoggedIn = false,
   balance = 'R$ 0,00'
 }) {
-  const [isRefreshing, setIsRefreshing] = React.useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [logoUrl, setLogoUrl] = useState('/logo_plataforma.png')
+
+  useEffect(() => {
+    loadLogo()
+  }, [])
+
+  const loadLogo = async () => {
+    try {
+      const response = await api.getLogo()
+      if (response.success && response.data.logo) {
+        setLogoUrl(response.data.logo.imageUrl)
+      }
+    } catch (error) {
+      console.error('Error loading logo:', error)
+      // Keep default logo on error
+    }
+  }
 
   const handleRefreshBalance = (event) => {
     event.stopPropagation()
@@ -40,7 +58,7 @@ function Header({
           </g>
         </svg>
         <a href="#" className="logo-link">
-          <img src="/logo_plataforma.png" alt="FORTUNE BET" className="logo-img" loading="lazy" />
+          <img src={logoUrl} alt="Logo" className="logo-img" loading="lazy" />
         </a>
       </div>
       <div className={`header-right${isLoggedIn ? ' is-logged-in' : ''}`}>

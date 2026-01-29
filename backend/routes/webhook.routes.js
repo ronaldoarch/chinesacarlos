@@ -1,6 +1,7 @@
 import express from 'express'
 import Transaction from '../models/Transaction.model.js'
 import User from '../models/User.model.js'
+import affiliateService from '../services/affiliate.service.js'
 
 const router = express.Router()
 
@@ -51,6 +52,10 @@ router.post('/pix', async (req, res) => {
         user.balance += transaction.netAmount
         user.totalDeposits += transaction.netAmount
         await user.save()
+
+        // Update referral qualification and VIP level
+        await affiliateService.updateReferralQualification(user._id)
+        await affiliateService.updateVipLevel(user._id)
       }
     }
 

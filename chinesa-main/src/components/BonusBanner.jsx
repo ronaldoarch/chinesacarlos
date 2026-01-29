@@ -1,13 +1,47 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import api from '../services/api'
 import './BonusBanner.css'
 
 function BonusBanner() {
+  const [banners, setBanners] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    loadBanners()
+  }, [])
+
+  const loadBanners = async () => {
+    try {
+      const response = await api.getBanners()
+      if (response.success && response.data.banners) {
+        setBanners(response.data.banners)
+      } else {
+        // Fallback to default banners
+        setBanners([
+          { id: 1, imageUrl: '/banner/banner-01.png', title: 'Banner 1' },
+          { id: 2, imageUrl: '/banner/banner-02.png', title: 'Banner 2' }
+        ])
+      }
+    } catch (error) {
+      console.error('Error loading banners:', error)
+      // Fallback to default banners
+      setBanners([
+        { id: 1, imageUrl: '/banner/banner-01.png', title: 'Banner 1' },
+        { id: 2, imageUrl: '/banner/banner-02.png', title: 'Banner 2' }
+      ])
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const slides = useMemo(
-    () => [
-      { id: 1, src: '/banner/banner-01.png', alt: 'Banner 1' },
-      { id: 2, src: '/banner/banner-02.png', alt: 'Banner 2' }
-    ],
-    []
+    () => banners.map((banner, index) => ({
+      id: banner._id || banner.id || index + 1,
+      src: banner.imageUrl,
+      alt: banner.title || `Banner ${index + 1}`,
+      linkUrl: banner.linkUrl
+    })),
+    [banners]
   )
   const repeatCount = 5
   const startIndex = slides.length * 2
@@ -115,6 +149,10 @@ function BonusBanner() {
 
   const activeIndex = ((currentIndex % slides.length) + slides.length) % slides.length
 
+  if (loading || slides.length === 0) {
+    return null
+  }
+
   return (
     <div className="banner-checkin">
       <div
@@ -142,7 +180,13 @@ function BonusBanner() {
               className="swiper-slide"
               style={{ ['--slides-count']: loopedSlides.length }}
             >
-              <img src={slide.src} alt={slide.alt} className="banner-img-full" loading="lazy" />
+              {slide.linkUrl ? (
+                <a href={slide.linkUrl} target="_blank" rel="noopener noreferrer">
+                  <img src={slide.src} alt={slide.alt} className="banner-img-full" loading="lazy" />
+                </a>
+              ) : (
+                <img src={slide.src} alt={slide.alt} className="banner-img-full" loading="lazy" />
+              )}
             </div>
           ))}
         </div>

@@ -14,9 +14,11 @@ class ApiService {
 
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`
+    const isFormData = options.body instanceof FormData
+    
     const config = {
       headers: {
-        'Content-Type': 'application/json',
+        ...(!isFormData && { 'Content-Type': 'application/json' }),
         ...options.headers
       },
       ...options
@@ -266,6 +268,122 @@ class ApiService {
   async duplicateTheme(id) {
     return this.request(`/theme/${id}/duplicate`, {
       method: 'POST'
+    })
+  }
+
+  // Chest endpoints
+  async getChests() {
+    return this.request('/chests', {
+      method: 'GET'
+    })
+  }
+
+  async claimChest(chestId) {
+    return this.request(`/chests/${chestId}/claim`, {
+      method: 'POST'
+    })
+  }
+
+  // VIP endpoints
+  async getVipStatus() {
+    return this.request('/vip/status', {
+      method: 'GET'
+    })
+  }
+
+  async claimVipBonus(level) {
+    return this.request(`/vip/claim/${level}`, {
+      method: 'POST'
+    })
+  }
+
+  async claimAllVipBonuses() {
+    return this.request('/vip/claim-all', {
+      method: 'POST'
+    })
+  }
+
+  // Affiliate endpoints
+  async getAffiliateStats() {
+    return this.request('/affiliate/stats', {
+      method: 'GET'
+    })
+  }
+
+  async withdrawAffiliateBalance(amount) {
+    return this.request('/affiliate/withdraw', {
+      method: 'POST',
+      body: JSON.stringify({ amount })
+    })
+  }
+
+  async getAffiliatesAdmin(search = '', page = 1) {
+    const params = new URLSearchParams()
+    if (search) params.append('search', search)
+    if (page) params.append('page', page)
+    return this.request(`/affiliate/admin/all?${params.toString()}`, {
+      method: 'GET'
+    })
+  }
+
+  async getAffiliateDetailsAdmin(userId) {
+    return this.request(`/affiliate/admin/${userId}`, {
+      method: 'GET'
+    })
+  }
+
+  // Banner endpoints
+  async getBanners() {
+    return this.request('/banners', {
+      method: 'GET'
+    })
+  }
+
+  async getLogo() {
+    return this.request('/banners/logo', {
+      method: 'GET'
+    })
+  }
+
+  async getBannersAdmin() {
+    return this.request('/banners/admin/all', {
+      method: 'GET'
+    })
+  }
+
+  async getLogoAdmin() {
+    return this.request('/banners/admin/logo', {
+      method: 'GET'
+    })
+  }
+
+  async createBanner(formData) {
+    return this.request('/banners/admin', {
+      method: 'POST',
+      body: formData,
+      headers: {} // Let browser set Content-Type with boundary for FormData
+    })
+  }
+
+  async updateBanner(id, formData) {
+    return this.request(`/banners/admin/${id}`, {
+      method: 'PUT',
+      body: formData,
+      headers: {} // Let browser set Content-Type with boundary for FormData
+    })
+  }
+
+  async deleteBanner(id) {
+    return this.request(`/banners/admin/${id}`, {
+      method: 'DELETE'
+    })
+  }
+
+  async uploadLogo(formData) {
+    return this.request('/banners/admin/logo', {
+      method: 'POST',
+      body: formData,
+      headers: {} // Let browser set Content-Type with boundary for FormData
     })
   }
 }

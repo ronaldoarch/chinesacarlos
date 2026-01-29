@@ -206,6 +206,71 @@
   color: rgba(255, 255, 255, 0.65);
 }
 
+.vip-action-status.claimed {
+  color: #4caf50;
+}
+
+.vip-action-status.locked {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.vip-action-btn {
+  background: var(--gold);
+  color: var(--primary-purple);
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.vip-action-btn:hover:not(:disabled) {
+  background: var(--color-primary-light);
+  transform: translateY(-1px);
+}
+
+.vip-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.vip-level-card.current {
+  border: 2px solid var(--gold);
+  background: rgba(225, 181, 74, 0.1);
+}
+
+.vip-level-card.unlocked {
+  border-color: rgba(76, 175, 80, 0.5);
+}
+
+.vip-level-card.locked {
+  opacity: 0.7;
+}
+
+.vip-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.vip-loading i {
+  font-size: 24px;
+}
+
+.vip-redeem:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 @keyframes vip-modal-in {
   from {
     transform: translateY(10px);

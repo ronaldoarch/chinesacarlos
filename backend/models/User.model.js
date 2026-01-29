@@ -53,6 +53,10 @@ const userSchema = new mongoose.Schema(
       min: 0,
       max: 8
     },
+    claimedVipBonuses: {
+      type: [Number],
+      default: []
+    },
     role: {
       type: String,
       enum: ['user', 'admin', 'superadmin'],
@@ -63,6 +67,23 @@ const userSchema = new mongoose.Schema(
       default: 0
     },
     totalWithdrawals: {
+      type: Number,
+      default: 0
+    },
+    totalBets: {
+      type: Number,
+      default: 0
+    },
+    affiliateBalance: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
+    totalReferrals: {
+      type: Number,
+      default: 0
+    },
+    qualifiedReferrals: {
       type: Number,
       default: 0
     },

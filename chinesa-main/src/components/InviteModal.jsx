@@ -1,13 +1,18 @@
 import React, { useEffect, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import api from '../services/api'
 import './InviteModal.css'
 
 function InviteModal({ isOpen, onClose }) {
-  const { user, isAuthenticated } = useAuth()
+  const { user, isAuthenticated, updateUser } = useAuth()
   const [isClosing, setIsClosing] = useState(false)
   const [activeTab, setActiveTab] = useState('convite')
   const [showLoginNotice, setShowLoginNotice] = useState(false)
   const [isLinkCopied, setIsLinkCopied] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [chests, setChests] = useState([])
+  const [affiliateStats, setAffiliateStats] = useState(null)
+  const [claimingChest, setClaimingChest] = useState(null)
   
   // Get referral code from user or use default
   const referralCode = user?.referralCode || '0000000000'
@@ -25,8 +30,12 @@ function InviteModal({ isOpen, onClose }) {
     if (isOpen) {
       setIsClosing(false)
       setActiveTab('convite')
+      if (isAuthenticated) {
+        loadChests()
+        loadAffiliateStats()
+      }
     }
-  }, [isOpen])
+  }, [isOpen, isAuthenticated])
 
   useEffect(() => {
     if (!isOpen) return
@@ -51,6 +60,93 @@ function InviteModal({ isOpen, onClose }) {
       setIsClosing(false)
       onClose()
     }, 600)
+  }
+
+  const loadChests = async () => {
+    try {
+      setLoading(true)
+      const response = await api.getChests()
+      if (response.success) {
+        setChests(response.data.chests || [])
+      }
+    } catch (error) {
+      console.error('Error loading chests:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadAffiliateStats = async () => {
+    try {
+      const response = await api.getAffiliateStats()
+      if (response.success) {
+        setAffiliateStats(response.data)
+        // Update user with affiliate balance
+        if (response.data.affiliateBalance !== undefined) {
+          updateUser({ affiliateBalance: response.data.affiliateBalance })
+        }
+      }
+    } catch (error) {
+      console.error('Error loading affiliate stats:', error)
+    }
+  }
+
+  const handleClaimChest = async (chestId) => {
+    if (!isAuthenticated) {
+      setShowLoginNotice(true)
+      return
+    }
+
+    try {
+      setClaimingChest(chestId)
+      const response = await api.claimChest(chestId)
+      if (response.success) {
+        await loadChests()
+        await loadAffiliateStats()
+        // Refresh user data
+        const userResponse = await api.getCurrentUser()
+        if (userResponse.success) {
+          updateUser(userResponse.data.user)
+        }
+      } else {
+        alert(response.message || 'Erro ao resgatar baú')
+      }
+    } catch (error) {
+      alert('Erro ao resgatar baú. Tente novamente.')
+    } finally {
+      setClaimingChest(null)
+    }
+  }
+
+  const handleWithdrawAffiliate = async () => {
+    if (!affiliateStats || affiliateStats.affiliateBalance <= 0) {
+      alert('Saldo de afiliado insuficiente')
+      return
+    }
+
+    const amount = affiliateStats.affiliateBalance
+    if (!window.confirm(`Transferir R$ ${amount.toFixed(2)} do saldo de afiliado para saldo principal?`)) {
+      return
+    }
+
+    try {
+      setLoading(true)
+      const response = await api.withdrawAffiliateBalance(amount)
+      if (response.success) {
+        await loadAffiliateStats()
+        const userResponse = await api.getCurrentUser()
+        if (userResponse.success) {
+          updateUser(userResponse.data.user)
+        }
+        alert('Transferência realizada com sucesso!')
+      } else {
+        alert(response.message || 'Erro ao realizar transferência')
+      }
+    } catch (error) {
+      alert('Erro ao realizar transferência. Tente novamente.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleCopyInvite = async () => {
@@ -187,14 +283,28 @@ function InviteModal({ isOpen, onClose }) {
               <div className="invite-balance-row">
                 <span className="chest-mobile-text text-white">Saldo Afiliado</span>
                 <span className="invite-balance-amount">
-                  {user?.balance ? new Intl.NumberFormat('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL',
-                    minimumFractionDigits: 2
-                  }).format(user.balance) : 'R$ 0,00'}
+                  {affiliateStats?.affiliateBalance !== undefined
+                    ? new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                        minimumFractionDigits: 2
+                      }).format(affiliateStats.affiliateBalance)
+                    : user?.affiliateBalance !== undefined
+                    ? new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                        minimumFractionDigits: 2
+                      }).format(user.affiliateBalance)
+                    : 'R$ 0,00'}
                 </span>
-                <button type="button" className="btn btn-warning btn-sm invite-balance-action">Sacar</button>
-                <button type="button" className="btn btn-outline-warning btn-sm">Transferir</button>
+                <button 
+                  type="button" 
+                  className="btn btn-warning btn-sm invite-balance-action"
+                  onClick={handleWithdrawAffiliate}
+                  disabled={loading || !affiliateStats || affiliateStats.affiliateBalance <= 0}
+                >
+                  {loading ? 'Transferindo...' : 'Transferir'}
+                </button>
               </div>
             </div>
 
@@ -205,22 +315,69 @@ function InviteModal({ isOpen, onClose }) {
               <div className="invite-info-item">Depósitos acumulados do subordinado R$ 10,00 ou mais</div>
               <div className="invite-info-title">Apostas acumuladas do subordinado R$ 100,00 ou mais</div>
             </div>
-            <div className="invite-grid-wrapper">
-              <div className="invite-grid">
-                {rewards.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className="invite-card"
-                    onClick={() => setShowLoginNotice(true)}
-                  >
-                    <img src="/box-convidar.png" alt="Baú" />
-                    <span className="invite-people">{item.people} pessoas</span>
-                    <span className="invite-amount">{item.amount}</span>
-                  </button>
-                ))}
+            {loading && chests.length === 0 ? (
+              <div className="invite-loading">
+                <i className="fa-solid fa-spinner fa-spin"></i>
+                <span>Carregando baús...</span>
               </div>
-            </div>
+            ) : (
+              <div className="invite-grid-wrapper">
+                <div className="invite-grid">
+                  {chests.map((chest) => {
+                    const referralsRequired = chest.metadata?.referralsRequired || 0
+                    const isUnlocked = chest.status === 'unlocked'
+                    const isClaimed = chest.status === 'claimed'
+                    const isLocked = chest.status === 'locked'
+                    
+                    return (
+                      <button
+                        key={chest._id}
+                        type="button"
+                        className={`invite-card ${isClaimed ? 'claimed' : isUnlocked ? 'unlocked' : 'locked'}`}
+                        onClick={() => {
+                          if (!isAuthenticated) {
+                            setShowLoginNotice(true)
+                          } else if (isUnlocked && !isClaimed) {
+                            handleClaimChest(chest._id)
+                          } else if (isLocked) {
+                            alert(`Este baú será desbloqueado quando você tiver ${referralsRequired} referidos qualificados`)
+                          }
+                        }}
+                        disabled={claimingChest === chest._id || isClaimed}
+                      >
+                        <img src="/box-convidar.png" alt="Baú" />
+                        <span className="invite-people">{referralsRequired} pessoas</span>
+                        <span className="invite-amount">
+                          {new Intl.NumberFormat('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL',
+                            minimumFractionDigits: 2
+                          }).format(chest.rewardAmount)}
+                        </span>
+                        {isClaimed && (
+                          <span className="chest-status claimed-status">
+                            <i className="fa-solid fa-check-circle"></i>
+                            Resgatado
+                          </span>
+                        )}
+                        {isUnlocked && !isClaimed && (
+                          <span className="chest-status unlocked-status">
+                            <i className="fa-solid fa-unlock"></i>
+                            Clique para resgatar
+                          </span>
+                        )}
+                        {isLocked && (
+                          <span className="chest-status locked-status">
+                            <i className="fa-solid fa-lock"></i>
+                            Bloqueado
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </>
         )}
 
@@ -228,44 +385,89 @@ function InviteModal({ isOpen, onClose }) {
           <div className="invite-performance">
             <div className="performance-filters">
               <button type="button" className="filter active">Tudo</button>
-              <button type="button" className="filter">Hoje</button>
-              <button type="button" className="filter">Ontem</button>
-              <button type="button" className="filter">Semana</button>
-              <button type="button" className="filter">Mês</button>
-            </div>
-            <div className="performance-search">
-              <i className="fa-solid fa-magnifying-glass"></i>
-              <input type="text" placeholder="Pesquisar pelo ID do usuário..." />
-              <button type="button" className="clear-btn">×</button>
             </div>
             <div className="performance-cards">
               <div className="performance-card">
                 <span>Cadastros</span>
-                <strong>0</strong>
+                <strong>{affiliateStats?.totalReferrals || 0}</strong>
               </div>
               <div className="performance-card">
                 <span>Total Depósitos</span>
                 <strong>
-                  {user?.balance ? new Intl.NumberFormat('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL',
-                    minimumFractionDigits: 2
-                  }).format(user.balance) : 'R$ 0,00'}
+                  {affiliateStats?.totalDeposits
+                    ? new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                        minimumFractionDigits: 2
+                      }).format(affiliateStats.totalDeposits)
+                    : 'R$ 0,00'}
                 </strong>
               </div>
               <div className="performance-card">
                 <span>Depositantes</span>
-                <strong>0</strong>
+                <strong>{affiliateStats?.qualifiedReferrals || 0}</strong>
               </div>
               <div className="performance-card">
                 <span>Qualificados</span>
-                <strong>0</strong>
+                <strong>{affiliateStats?.qualifiedReferrals || 0}</strong>
               </div>
             </div>
-            <div className="performance-empty">
-              <i className="fa-solid fa-user-slash"></i>
-              <span>Você ainda não tem referidos.</span>
-            </div>
+            {affiliateStats?.referrals && affiliateStats.referrals.length > 0 ? (
+              <div className="referrals-list">
+                <h3>Seus Referidos</h3>
+                <div className="referrals-table">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Usuário</th>
+                        <th>Status</th>
+                        <th>Depósitos</th>
+                        <th>Apostas</th>
+                        <th>Recompensa</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {affiliateStats.referrals.map((ref) => (
+                        <tr key={ref.id}>
+                          <td>{ref.referred?.username || 'N/A'}</td>
+                          <td>
+                            <span className={`status-badge ${ref.status}`}>
+                              {ref.status === 'qualified' ? 'Qualificado' : ref.status === 'rewarded' ? 'Recompensado' : 'Pendente'}
+                            </span>
+                          </td>
+                          <td>
+                            {new Intl.NumberFormat('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL',
+                              minimumFractionDigits: 2
+                            }).format(ref.totalDeposits || 0)}
+                          </td>
+                          <td>
+                            {new Intl.NumberFormat('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL',
+                              minimumFractionDigits: 2
+                            }).format(ref.totalBets || 0)}
+                          </td>
+                          <td>
+                            {new Intl.NumberFormat('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL',
+                              minimumFractionDigits: 2
+                            }).format(ref.rewardAmount || 0)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div className="performance-empty">
+                <i className="fa-solid fa-user-slash"></i>
+                <span>Você ainda não tem referidos.</span>
+              </div>
+            )}
           </div>
         )}
         {showLoginNotice && (

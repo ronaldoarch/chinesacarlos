@@ -10,6 +10,10 @@ import adminRoutes from './routes/admin.routes.js'
 import gamesRoutes from './routes/games.routes.js'
 import gatewayRoutes from './routes/gateway.routes.js'
 import themeRoutes from './routes/theme.routes.js'
+import chestRoutes from './routes/chest.routes.js'
+import vipRoutes from './routes/vip.routes.js'
+import affiliateRoutes from './routes/affiliate.routes.js'
+import bannerRoutes from './routes/banner.routes.js'
 import { errorHandler } from './middleware/errorHandler.js'
 
 // Load environment variables
@@ -41,6 +45,10 @@ app.use('/api/admin', adminRoutes)
 app.use('/api/games', gamesRoutes)
 app.use('/api/gateway', gatewayRoutes)
 app.use('/api/theme', themeRoutes)
+app.use('/api/chests', chestRoutes)
+app.use('/api/vip', vipRoutes)
+app.use('/api/affiliate', affiliateRoutes)
+app.use('/api/banners', bannerRoutes)
 
 // Health check
 app.get('/api/health', (req, res) => {

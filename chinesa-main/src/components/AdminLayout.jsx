@@ -6,6 +6,8 @@ import AdminTransactions from '../pages/admin/AdminTransactions'
 import AdminGamesConfig from '../pages/admin/AdminGamesConfig'
 import AdminGatewayConfig from '../pages/admin/AdminGatewayConfig'
 import AdminTheme from '../pages/admin/AdminTheme'
+import AdminAffiliates from '../pages/admin/AdminAffiliates'
+import AdminBanners from '../pages/admin/AdminBanners'
 import './AdminLayout.css'
 
 function AdminLayout() {
@@ -178,6 +180,10 @@ function AdminLayout() {
         return <AdminGatewayConfig />
       case 'theme':
         return <AdminTheme />
+      case 'affiliates':
+        return <AdminAffiliates />
+      case 'banners':
+        return <AdminBanners />
       default:
         return <AdminDashboard />
     }
@@ -245,6 +251,24 @@ function AdminLayout() {
             >
               <i className="fa-solid fa-palette"></i>
               <span>Temas</span>
+            </button>
+          </li>
+          <li>
+            <button
+              className={activePage === 'affiliates' ? 'active' : ''}
+              onClick={() => setActivePage('affiliates')}
+            >
+              <i className="fa-solid fa-users-line"></i>
+              <span>Afiliados</span>
+            </button>
+          </li>
+          <li>
+            <button
+              className={activePage === 'banners' ? 'active' : ''}
+              onClick={() => setActivePage('banners')}
+            >
+              <i className="fa-solid fa-image"></i>
+              <span>Banners & Logo</span>
             </button>
           </li>
         </ul>

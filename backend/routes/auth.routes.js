@@ -2,6 +2,7 @@ import express from 'express'
 import rateLimit from 'express-rate-limit'
 import { body, validationResult } from 'express-validator'
 import User from '../models/User.model.js'
+import Referral from '../models/Referral.model.js'
 import generateToken from '../utils/generateToken.js'
 import { validatePhone } from '../utils/validatePhone.js'
 import { protect } from '../middleware/auth.middleware.js'
@@ -60,7 +61,7 @@ router.post(
         })
       }
 
-      const { username, phone, password } = req.body
+      const { username, phone, password, referralCode } = req.body
 
       // Validate and format phone
       const phoneValidation = validatePhone(phone)
@@ -94,12 +95,33 @@ router.post(
         }
       }
 
+      // Find referrer if referral code provided
+      let referrer = null
+      if (referralCode) {
+        referrer = await User.findOne({ referralCode: referralCode.toLowerCase() })
+      }
+
       // Create user
       const user = await User.create({
         username: username.toLowerCase(),
         phone: phoneValidation.digits,
-        password
+        password,
+        referredBy: referrer?._id || null
       })
+
+      // Create referral record if referrer exists
+      if (referrer) {
+        await Referral.create({
+          referrer: referrer._id,
+          referred: user._id,
+          referralCode: referrer.referralCode,
+          status: 'pending'
+        })
+
+        // Update referrer stats
+        referrer.totalReferrals = (referrer.totalReferrals || 0) + 1
+        await referrer.save()
+      }
 
       // Generate token
       const token = generateToken(user._id)

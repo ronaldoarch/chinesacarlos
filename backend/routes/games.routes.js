@@ -1,0 +1,347 @@
+import express from 'express'
+import { protect } from '../middleware/auth.middleware.js'
+import { isAdmin } from '../middleware/admin.middleware.js'
+import igamewinService from '../services/igamewin.service.js'
+import GameConfig from '../models/GameConfig.model.js'
+
+const router = express.Router()
+
+// @route   GET /api/games/config
+// @desc    Get game configuration
+// @access  Private/Admin
+router.get('/config', protect, isAdmin, async (req, res) => {
+  try {
+    const config = await GameConfig.getConfig()
+    res.json({
+      success: true,
+      data: config
+    })
+  } catch (error) {
+    console.error('Get config error:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao buscar configuração',
+      error: error.message
+    })
+  }
+})
+
+// @route   PUT /api/games/config
+// @desc    Update game configuration
+// @access  Private/Admin
+router.put('/config', protect, isAdmin, async (req, res) => {
+  try {
+    const { agentCode, agentToken, agentSecret, selectedProviders, selectedGames } = req.body
+
+    let config = await GameConfig.findOne()
+    
+    if (!config) {
+      config = new GameConfig({
+        agentCode: agentCode || process.env.IGAMEWIN_AGENT_CODE || 'Midaslabs',
+        agentToken: agentToken || process.env.IGAMEWIN_AGENT_TOKEN || '',
+        agentSecret: agentSecret || process.env.IGAMEWIN_AGENT_SECRET || ''
+      })
+    }
+
+    if (agentCode) config.agentCode = agentCode
+    if (agentToken) config.agentToken = agentToken
+    if (agentSecret) config.agentSecret = agentSecret
+    if (selectedProviders) {
+      if (selectedProviders.length > 3) {
+        return res.status(400).json({
+          success: false,
+          message: 'Máximo de 3 provedores permitidos'
+        })
+      }
+      config.selectedProviders = selectedProviders
+    }
+    if (selectedGames) {
+      if (selectedGames.length > 15) {
+        return res.status(400).json({
+          success: false,
+          message: 'Máximo de 15 jogos permitidos'
+        })
+      }
+      config.selectedGames = selectedGames
+    }
+
+    await config.save()
+
+    res.json({
+      success: true,
+      message: 'Configuração atualizada com sucesso',
+      data: config
+    })
+  } catch (error) {
+    console.error('Update config error:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao atualizar configuração',
+      error: error.message
+    })
+  }
+})
+
+// @route   GET /api/games/providers
+// @desc    Get available providers
+// @access  Private/Admin
+router.get('/providers', protect, isAdmin, async (req, res) => {
+  try {
+    const response = await igamewinService.getProviderList()
+    if (response.status === 1) {
+      res.json({
+        success: true,
+        data: response.providers
+      })
+    } else {
+      res.status(400).json({
+        success: false,
+        message: response.msg || 'Erro ao buscar provedores'
+      })
+    }
+  } catch (error) {
+    console.error('Get providers error:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao buscar provedores',
+      error: error.message
+    })
+  }
+})
+
+// @route   GET /api/games/games/:providerCode
+// @desc    Get games from a provider
+// @access  Private/Admin
+router.get('/games/:providerCode', protect, isAdmin, async (req, res) => {
+  try {
+    const { providerCode } = req.params
+    const response = await igamewinService.getGameList(providerCode)
+    if (response.status === 1) {
+      res.json({
+        success: true,
+        data: response.games
+      })
+    } else {
+      res.status(400).json({
+        success: false,
+        message: response.msg || 'Erro ao buscar jogos'
+      })
+    }
+  } catch (error) {
+    console.error('Get games error:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao buscar jogos',
+      error: error.message
+    })
+  }
+})
+
+// @route   GET /api/games/selected
+// @desc    Get selected games for home page
+// @access  Public
+router.get('/selected', async (req, res) => {
+  try {
+    const config = await GameConfig.getConfig()
+    res.json({
+      success: true,
+      data: {
+        providers: config.selectedProviders,
+        games: config.selectedGames
+      }
+    })
+  } catch (error) {
+    console.error('Get selected games error:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao buscar jogos selecionados',
+      error: error.message
+    })
+  }
+})
+
+// @route   POST /api/games/launch
+// @desc    Launch a game
+// @access  Private
+router.post('/launch', protect, async (req, res) => {
+  try {
+    const { providerCode, gameCode, lang = 'pt' } = req.body
+    const user = req.user
+
+    if (!providerCode || !gameCode) {
+      return res.status(400).json({
+        success: false,
+        message: 'Provider code e game code são obrigatórios'
+      })
+    }
+
+    // Create user in igamewin if not exists
+    const userCode = user._id.toString()
+    try {
+      await igamewinService.createUser(userCode)
+    } catch (error) {
+      // User might already exist, continue
+      console.log('User creation:', error.message)
+    }
+
+    // Launch game
+    const response = await igamewinService.launchGame(userCode, providerCode, gameCode, lang)
+    
+    if (response.status === 1) {
+      res.json({
+        success: true,
+        data: {
+          launchUrl: response.launch_url
+        }
+      })
+    } else {
+      res.status(400).json({
+        success: false,
+        message: response.msg || 'Erro ao lançar jogo'
+      })
+    }
+  } catch (error) {
+    console.error('Launch game error:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao lançar jogo',
+      error: error.message
+    })
+  }
+})
+
+// @route   POST /api/games/deposit
+// @desc    Deposit to user game balance
+// @access  Private
+router.post('/deposit', protect, async (req, res) => {
+  try {
+    const { amount } = req.body
+    const user = req.user
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valor inválido'
+      })
+    }
+
+    if (user.balance < amount) {
+      return res.status(400).json({
+        success: false,
+        message: 'Saldo insuficiente'
+      })
+    }
+
+    const userCode = user._id.toString()
+    const response = await igamewinService.depositUserBalance(userCode, amount)
+
+    if (response.status === 1) {
+      // Update user balance
+      user.balance -= amount
+      await user.save()
+
+      res.json({
+        success: true,
+        message: 'Depósito realizado com sucesso',
+        data: {
+          userBalance: response.user_balance,
+          agentBalance: response.agent_balance
+        }
+      })
+    } else {
+      res.status(400).json({
+        success: false,
+        message: response.msg || 'Erro ao realizar depósito'
+      })
+    }
+  } catch (error) {
+    console.error('Deposit error:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao realizar depósito',
+      error: error.message
+    })
+  }
+})
+
+// @route   POST /api/games/withdraw
+// @desc    Withdraw from user game balance
+// @access  Private
+router.post('/withdraw', protect, async (req, res) => {
+  try {
+    const { amount } = req.body
+    const user = req.user
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valor inválido'
+      })
+    }
+
+    const userCode = user._id.toString()
+    const response = await igamewinService.withdrawUserBalance(userCode, amount)
+
+    if (response.status === 1) {
+      // Update user balance
+      user.balance += amount
+      await user.save()
+
+      res.json({
+        success: true,
+        message: 'Saque realizado com sucesso',
+        data: {
+          userBalance: response.user_balance,
+          agentBalance: response.agent_balance
+        }
+      })
+    } else {
+      res.status(400).json({
+        success: false,
+        message: response.msg || 'Erro ao realizar saque'
+      })
+    }
+  } catch (error) {
+    console.error('Withdraw error:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao realizar saque',
+      error: error.message
+    })
+  }
+})
+
+// @route   GET /api/games/balance
+// @desc    Get user game balance
+// @access  Private
+router.get('/balance', protect, async (req, res) => {
+  try {
+    const user = req.user
+    const userCode = user._id.toString()
+    const response = await igamewinService.getMoneyInfo(userCode)
+
+    if (response.status === 1) {
+      res.json({
+        success: true,
+        data: {
+          userBalance: response.user?.balance || 0,
+          agentBalance: response.agent?.balance || 0
+        }
+      })
+    } else {
+      res.status(400).json({
+        success: false,
+        message: response.msg || 'Erro ao buscar saldo'
+      })
+    }
+  } catch (error) {
+    console.error('Get balance error:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao buscar saldo',
+      error: error.message
+    })
+  }
+})
+
+export default router

@@ -105,8 +105,27 @@
   font-size: var(--font-size-xxl);
 }
 
-.game-thumbnail:hover {
+.game-thumbnail-image {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: var(--border-radius);
+  display: block;
+}
+
+.game-thumbnail:hover,
+.game-thumbnail-image:hover {
   border: 1px solid var(--gold);
+}
+
+.loading-games {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.loading-games i {
+  margin-right: var(--spacing-sm);
 }
 
 .online-indicator {

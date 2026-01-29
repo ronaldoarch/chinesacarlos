@@ -144,6 +144,65 @@ class ApiService {
       method: 'GET'
     })
   }
+
+  // Games endpoints
+  async getGameConfig() {
+    return this.request('/games/config', {
+      method: 'GET'
+    })
+  }
+
+  async updateGameConfig(configData) {
+    return this.request('/games/config', {
+      method: 'PUT',
+      body: JSON.stringify(configData)
+    })
+  }
+
+  async getProviders() {
+    return this.request('/games/providers', {
+      method: 'GET'
+    })
+  }
+
+  async getGames(providerCode) {
+    return this.request(`/games/games/${providerCode}`, {
+      method: 'GET'
+    })
+  }
+
+  async getSelectedGames() {
+    return this.request('/games/selected', {
+      method: 'GET'
+    })
+  }
+
+  async launchGame(providerCode, gameCode, lang = 'pt') {
+    return this.request('/games/launch', {
+      method: 'POST',
+      body: JSON.stringify({ providerCode, gameCode, lang })
+    })
+  }
+
+  async getGameBalance() {
+    return this.request('/games/balance', {
+      method: 'GET'
+    })
+  }
+
+  async depositGameBalance(amount) {
+    return this.request('/games/deposit', {
+      method: 'POST',
+      body: JSON.stringify({ amount })
+    })
+  }
+
+  async withdrawGameBalance(amount) {
+    return this.request('/games/withdraw', {
+      method: 'POST',
+      body: JSON.stringify({ amount })
+    })
+  }
 }
 
 export default new ApiService()

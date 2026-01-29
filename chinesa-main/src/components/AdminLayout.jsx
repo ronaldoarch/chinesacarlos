@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext'
 import AdminDashboard from '../pages/admin/AdminDashboard'
 import AdminUsers from '../pages/admin/AdminUsers'
 import AdminTransactions from '../pages/admin/AdminTransactions'
+import AdminGamesConfig from '../pages/admin/AdminGamesConfig'
 import './AdminLayout.css'
 
 function AdminLayout() {
@@ -169,6 +170,8 @@ function AdminLayout() {
         return <AdminUsers />
       case 'transactions':
         return <AdminTransactions />
+      case 'games':
+        return <AdminGamesConfig />
       default:
         return <AdminDashboard />
     }
@@ -209,6 +212,15 @@ function AdminLayout() {
             >
               <i className="fa-solid fa-exchange-alt"></i>
               <span>Transações</span>
+            </button>
+          </li>
+          <li>
+            <button
+              className={activePage === 'games' ? 'active' : ''}
+              onClick={() => setActivePage('games')}
+            >
+              <i className="fa-solid fa-gamepad"></i>
+              <span>Jogos</span>
             </button>
           </li>
         </ul>

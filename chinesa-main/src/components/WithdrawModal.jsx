@@ -11,6 +11,7 @@ function WithdrawModal({ isOpen, onClose, onBack, initialTab = 'saque' }) {
   const [withdrawAmount, setWithdrawAmount] = useState('')
   const [showWithdrawPassword, setShowWithdrawPassword] = useState(false)
   const [showPinValue, setShowPinValue] = useState(false)
+  const [pixAccounts, setPixAccounts] = useState([])
   const pinRefs = useRef([])
   const formatWithdrawAmount = (value) => {
     const trimmed = value.trim()
@@ -166,11 +167,11 @@ function WithdrawModal({ isOpen, onClose, onBack, initialTab = 'saque' }) {
                     </div>
                     <div className="withdraw-summary-row">
                       <span>Nome:</span>
-                      <strong>diago xavier</strong>
+                      <strong>{pixAccounts.length > 0 ? (pixAccounts[0].name || pixAccounts[0].holderName || 'Conta PIX') : 'Cadastre uma conta na aba Contas'}</strong>
                     </div>
                     <div className="withdraw-summary-row">
-                      <span>Chave EMAIL:</span>
-                      <strong>segurobackup@gmail.com</strong>
+                      <span>Chave {pixAccounts.length > 0 ? (pixAccounts[0].pixKeyType || pixAccounts[0].type || '') : ''}:</span>
+                      <strong>{pixAccounts.length > 0 ? (pixAccounts[0].pixKey || pixAccounts[0].key || '—') : '—'}</strong>
                     </div>
                   </div>
 
@@ -300,27 +301,32 @@ function WithdrawModal({ isOpen, onClose, onBack, initialTab = 'saque' }) {
 
             {!showAccountForm && (
               <>
-                <div className="withdraw-accounts-card">
-                  <div className="withdraw-accounts-card-header">
-                    <span className="withdraw-account-name">digao xavier</span>
-                    <span className="withdraw-account-status">Ativa</span>
-                    <button type="button" className="withdraw-account-trash" aria-label="Remover conta">
-                      <i className="fa-solid fa-trash"></i>
-                    </button>
+                {pixAccounts.length > 0 ? (
+                  pixAccounts.map((account) => (
+                    <div key={account.id || account._id} className="withdraw-accounts-card">
+                      <div className="withdraw-accounts-card-header">
+                        <span className="withdraw-account-name">{account.name || account.holderName || 'Conta PIX'}</span>
+                        <span className="withdraw-account-status">{account.active !== false ? 'Ativa' : 'Inativa'}</span>
+                        <button type="button" className="withdraw-account-trash" aria-label="Remover conta">
+                          <i className="fa-solid fa-trash"></i>
+                        </button>
+                      </div>
+                      <div className="withdraw-accounts-card-row">
+                        <span>Tipo:</span>
+                        <strong>{account.pixKeyType || account.type || '—'}</strong>
+                      </div>
+                      <div className="withdraw-accounts-card-row">
+                        <span>Chave:</span>
+                        <strong>{account.pixKey || account.key || '—'}</strong>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="withdraw-empty-card">
+                    <i className="fa-solid fa-circle-info"></i>
+                    <span>Você ainda não possui contas PIX cadastradas.</span>
                   </div>
-                  <div className="withdraw-accounts-card-row">
-                    <span>Tipo:</span>
-                    <strong>EMAIL</strong>
-                  </div>
-                  <div className="withdraw-accounts-card-row">
-                    <span>Chave:</span>
-                    <strong>segurobackup@gmail.com</strong>
-                  </div>
-                </div>
-                <div className="withdraw-empty-card">
-                  <i className="fa-solid fa-circle-info"></i>
-                  <span>Você ainda não possui contas PIX cadastradas.</span>
-                </div>
+                )}
               </>
             )}
 

@@ -12,7 +12,7 @@
 .auth-modal {
   width: 100%;
   max-width: 400px;
-  background: linear-gradient(180deg, var(--primary-purple) 0%, #3a1450 100%);
+  background: linear-gradient(180deg, var(--primary-purple) 0%, var(--dark-purple) 100%);
   border-radius: 10px;
   padding: var(--spacing-lg);
   position: relative;
@@ -134,7 +134,7 @@
 
 .auth-submit {
   background: #e0b552;
-  color: #3a1450;
+  color: var(--dark-purple);
   border-radius: 8px;
   padding: 10px 16px;
   font-weight: var(--font-weight-bold);
@@ -163,7 +163,7 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #3a1450;
+  background: var(--dark-purple);
   color: var(--text-white);
   border: 2px solid rgba(255, 255, 255, 0.2);
   display: flex;

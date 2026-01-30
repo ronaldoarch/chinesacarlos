@@ -19,6 +19,9 @@ import chestRoutes from './routes/chest.routes.js'
 import vipRoutes from './routes/vip.routes.js'
 import affiliateRoutes from './routes/affiliate.routes.js'
 import bannerRoutes from './routes/banner.routes.js'
+import bonusRoutes from './routes/bonus.routes.js'
+import popupRoutes from './routes/popup.routes.js'
+import jackpotRoutes from './routes/jackpot.routes.js'
 import { errorHandler } from './middleware/errorHandler.js'
 
 // Load environment variables
@@ -78,6 +81,9 @@ app.use('/api/chests', chestRoutes)
 app.use('/api/vip', vipRoutes)
 app.use('/api/affiliate', affiliateRoutes)
 app.use('/api/banners', bannerRoutes)
+app.use('/api/bonus', bonusRoutes)
+app.use('/api/popups', popupRoutes)
+app.use('/api/jackpot', jackpotRoutes)
 
 // Health check
 app.get('/api/health', (req, res) => {

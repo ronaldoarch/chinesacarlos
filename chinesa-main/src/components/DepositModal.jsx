@@ -3,6 +3,16 @@ import { useAuth } from '../contexts/AuthContext'
 import api from '../services/api'
 import './DepositModal.css'
 
+const DEFAULT_QUICK_AMOUNTS = [
+  { id: 1, value: 'R$ 10', amount: 10, bonusPercent: 0 },
+  { id: 2, value: 'R$ 20', amount: 20, bonusPercent: 2 },
+  { id: 3, value: 'R$ 30', amount: 30, bonusPercent: 2 },
+  { id: 4, value: 'R$ 40', amount: 40, bonusPercent: 2 },
+  { id: 5, value: 'R$ 50', amount: 50, bonusPercent: 5 },
+  { id: 6, value: 'R$ 75', amount: 75, bonusPercent: 5 },
+  { id: 7, value: 'R$ 100', amount: 100, bonusPercent: 10, full: true }
+]
+
 function DepositModal({ isOpen, onClose, showCpfField = true, onConfirmDeposit, onOpenHistory }) {
   const { updateUser } = useAuth()
   const [isClosing, setIsClosing] = useState(false)
@@ -12,6 +22,7 @@ function DepositModal({ isOpen, onClose, showCpfField = true, onConfirmDeposit, 
   const [showCpfError, setShowCpfError] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [quickAmounts, setQuickAmounts] = useState(DEFAULT_QUICK_AMOUNTS)
 
   useEffect(() => {
     if (isOpen) {
@@ -36,6 +47,28 @@ function DepositModal({ isOpen, onClose, showCpfField = true, onConfirmDeposit, 
     return () => clearTimeout(timer)
   }, [showCpfError])
 
+  useEffect(() => {
+    if (!isOpen) return
+    api.getBonusConfig()
+      .then((res) => {
+        if (res.success && res.data && Array.isArray(res.data.depositTiers) && res.data.depositTiers.length > 0) {
+          const tiers = res.data.depositTiers
+            .filter((t) => Number(t.amount) > 0)
+            .sort((a, b) => Number(a.amount) - Number(b.amount))
+          if (tiers.length > 0) {
+            setQuickAmounts(tiers.map((t, i) => ({
+              id: i + 1,
+              value: `R$ ${Number(t.amount)}`,
+              amount: Number(t.amount),
+              bonusPercent: Number(t.bonusPercent) || 0,
+              full: i === tiers.length - 1
+            })))
+          }
+        }
+      })
+      .catch(() => {})
+  }, [isOpen])
+
   const handleClose = () => {
     setIsClosing(true)
     setTimeout(() => {
@@ -45,16 +78,6 @@ function DepositModal({ isOpen, onClose, showCpfField = true, onConfirmDeposit, 
   }
 
   if (!isOpen && !isClosing) return null
-
-  const quickAmounts = [
-    { id: 1, value: 'R$ 10', amount: 10, bonusPercent: 0 },
-    { id: 2, value: 'R$ 20', amount: 20, bonusPercent: 2 },
-    { id: 3, value: 'R$ 30', amount: 30, bonusPercent: 2 },
-    { id: 4, value: 'R$ 40', amount: 40, bonusPercent: 2 },
-    { id: 5, value: 'R$ 50', amount: 50, bonusPercent: 5 },
-    { id: 6, value: 'R$ 75', amount: 75, bonusPercent: 5 },
-    { id: 7, value: 'R$ 100', amount: 100, bonusPercent: 10, full: true }
-  ]
 
   const handleQuickAmountClick = (amountId, amount) => {
     setSelectedAmountId(amountId)
@@ -113,9 +136,10 @@ function DepositModal({ isOpen, onClose, showCpfField = true, onConfirmDeposit, 
   const amountValue = Math.min(parsedAmount, 10000)
   const selectedAmount = quickAmounts.find((amount) => amount.id === selectedAmountId)
   const matchedAmount = quickAmounts.find((amount) => amount.amount === amountValue)
+  const tierForValue = quickAmounts.filter((t) => t.amount <= amountValue).sort((a, b) => b.amount - a.amount)[0]
   const bonusPercent = selectedAmount
     ? selectedAmount.bonusPercent
-    : (amountValue > 100 ? 10 : (matchedAmount ? matchedAmount.bonusPercent : 0))
+    : (matchedAmount ? matchedAmount.bonusPercent : (tierForValue ? tierForValue.bonusPercent : 0))
   const bonusAmount = amountValue * (bonusPercent / 100)
   const totalAmount = amountValue + bonusAmount
 

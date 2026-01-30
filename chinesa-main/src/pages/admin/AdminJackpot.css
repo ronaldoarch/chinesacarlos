@@ -1,0 +1,97 @@
+.admin-jackpot .admin-header {
+  margin-bottom: var(--spacing-lg);
+}
+
+.admin-jackpot .config-section {
+  background: linear-gradient(135deg, rgba(106, 46, 132, 0.9) 0%, rgba(63, 20, 83, 0.9) 100%);
+  border-radius: 12px;
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-jackpot .config-section h2 {
+  color: var(--gold);
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--spacing-md);
+}
+
+.admin-jackpot .section-description {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.admin-jackpot .form-group {
+  margin-bottom: var(--spacing-md);
+}
+
+.admin-jackpot .form-group label {
+  display: block;
+  color: var(--gold);
+  font-size: var(--font-size-sm);
+  margin-bottom: 4px;
+}
+
+.admin-jackpot .form-group input {
+  width: 100%;
+  max-width: 280px;
+  padding: var(--spacing-md);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--text-white);
+  font-size: var(--font-size-md);
+}
+
+.admin-jackpot .form-hint {
+  display: block;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: var(--font-size-xs);
+  margin-top: 6px;
+}
+
+.admin-jackpot .config-actions {
+  margin-top: var(--spacing-xl);
+}
+
+.admin-jackpot .save-btn {
+  border: none;
+  padding: var(--spacing-md) var(--spacing-xl);
+  border-radius: 8px;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--gold);
+  color: var(--primary-purple);
+}
+
+.admin-jackpot .save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.admin-jackpot .alert {
+  padding: var(--spacing-md);
+  border-radius: 8px;
+  margin-bottom: var(--spacing-md);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-jackpot .alert-error {
+  background: rgba(244, 67, 54, 0.2);
+  border: 1px solid rgba(244, 67, 54, 0.4);
+  color: #f44336;
+}
+
+.admin-jackpot .alert-success {
+  background: rgba(76, 175, 80, 0.2);
+  border: 1px solid rgba(76, 175, 80, 0.4);
+  color: #4caf50;
+}

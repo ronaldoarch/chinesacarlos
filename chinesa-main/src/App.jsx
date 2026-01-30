@@ -1,6 +1,7 @@
 import React from 'react'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
+import api from './services/api'
 import Header from './components/Header'
 import NavigationIcons from './components/NavigationIcons'
 import BonusBanner from './components/BonusBanner'
@@ -23,6 +24,7 @@ import WithdrawModal from './components/WithdrawModal'
 import EditProfileModal from './components/EditProfileModal'
 import ChangePasswordModal from './components/ChangePasswordModal'
 import VipModal from './components/VipModal'
+import PopupPromoModal from './components/PopupPromoModal'
 import './styles/App.css'
 
 function AppContent() {
@@ -45,6 +47,31 @@ function AppContent() {
   const [isVipOpen, setIsVipOpen] = React.useState(false)
   const [pixAmount, setPixAmount] = React.useState(0)
   const [pixTransaction, setPixTransaction] = React.useState(null)
+  const [promoPopup, setPromoPopup] = React.useState(null)
+
+  React.useEffect(() => {
+    api.getActivePopup()
+      .then((res) => {
+        if (!res.success || !res.data) return
+        const popup = res.data
+        if (popup.showOncePerSession) {
+          try {
+            if (sessionStorage.getItem('popup_seen_' + popup._id)) return
+          } catch (_) {}
+        }
+        setPromoPopup(popup)
+      })
+      .catch(() => {})
+  }, [])
+
+  const closePromoPopup = () => {
+    if (promoPopup && promoPopup.showOncePerSession) {
+      try {
+        sessionStorage.setItem('popup_seen_' + promoPopup._id, '1')
+      } catch (_) {}
+    }
+    setPromoPopup(null)
+  }
 
   // Format balance
   const formatBalance = (amount) => {
@@ -277,6 +304,7 @@ function AppContent() {
         onBack={handleChangePasswordBack}
       />
       <InviteModal isOpen={isInviteOpen} onClose={closeInvite} />
+      <PopupPromoModal popup={promoPopup} onClose={closePromoPopup} />
     </div>
   )
 }

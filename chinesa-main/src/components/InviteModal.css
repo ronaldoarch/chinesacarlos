@@ -238,7 +238,7 @@
 
 .invite-balance-row .btn-warning {
   background: var(--gold);
-  color: #3f1453;
+  color: var(--primary-purple);
   border: 1px solid #d4a840;
 }
 

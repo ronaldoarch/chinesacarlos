@@ -1,13 +1,33 @@
 import React, { useEffect, useState } from 'react'
+import { useAuth } from '../contexts/AuthContext'
 import './EditProfileModal.css'
 
 function EditProfileModal({ isOpen, onClose, onBack }) {
+  const { user } = useAuth()
   const [isClosing, setIsClosing] = useState(false)
+  const [usernameValue, setUsernameValue] = useState('')
   const [whatsappValue, setWhatsappValue] = useState('')
 
   useEffect(() => {
-    if (isOpen) setIsClosing(false)
-  }, [isOpen])
+    if (isOpen) {
+      setIsClosing(false)
+      setUsernameValue(user?.username || '')
+      const phone = user?.phone
+      if (phone) {
+        const digits = String(phone).replace(/\D/g, '').slice(0, 11)
+        const ddd = digits.slice(0, 2)
+        const prefix = digits.slice(2, 7)
+        const suffix = digits.slice(7, 11)
+        let formatted = ''
+        if (ddd) formatted = `(${ddd}${ddd.length === 2 ? ') ' : ''}`
+        if (prefix) formatted += prefix
+        if (suffix) formatted += `-${suffix}`
+        setWhatsappValue(formatted)
+      } else {
+        setWhatsappValue('')
+      }
+    }
+  }, [isOpen, user?.username, user?.phone])
 
   useEffect(() => {
     if (!isOpen) return
@@ -77,7 +97,12 @@ function EditProfileModal({ isOpen, onClose, onBack }) {
         <div className="edit-profile-field">
           <div className="edit-profile-input">
             <i className="fa-solid fa-user"></i>
-            <input type="text" placeholder="Digite seu nome completo" />
+            <input
+              type="text"
+              placeholder="Nome de usuário"
+              value={usernameValue}
+              onChange={(e) => setUsernameValue(e.target.value)}
+            />
           </div>
         </div>
 

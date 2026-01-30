@@ -120,7 +120,7 @@
 }
 
 .games-provider {
-  background: linear-gradient(135deg, #7a2b9e 0%, #3f1453 100%) !important;
+  background: linear-gradient(135deg, var(--light-purple) 0%, var(--primary-purple) 100%) !important;
   border-radius: 5px;
   padding: 5px;
   width: 100%;

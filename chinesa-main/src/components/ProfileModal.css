@@ -66,7 +66,7 @@
 }
 
 .profile-card {
-  background: linear-gradient(135deg, #7a2b9e 0%, #3f1453 100%);
+  background: linear-gradient(135deg, var(--light-purple) 0%, var(--primary-purple) 100%);
   border-radius: 12px;
   padding: 18px;
   display: flex;
@@ -81,7 +81,7 @@
   height: 44px;
   border-radius: 50%;
   background: #d3b24d;
-  color: #3f1453;
+  color: var(--primary-purple);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -135,7 +135,7 @@
 }
 
 .profile-action {
-  background: linear-gradient(135deg, #7a2b9e 0%, #3f1453 100%);
+  background: linear-gradient(135deg, var(--light-purple) 0%, var(--primary-purple) 100%);
   border: 1px solid rgba(225, 181, 74, 0.6);
   border-radius: 12px;
   padding: 12px 10px;

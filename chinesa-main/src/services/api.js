@@ -388,6 +388,79 @@ class ApiService {
       headers: {} // Let browser set Content-Type with boundary for FormData
     })
   }
+
+  // Bonus config (public for deposit modal)
+  async getBonusConfig() {
+    return this.request('/bonus/config', {
+      method: 'GET'
+    })
+  }
+
+  async getBonusConfigAdmin() {
+    return this.request('/bonus/config/admin', {
+      method: 'GET'
+    })
+  }
+
+  async updateBonusConfig(configData) {
+    return this.request('/bonus/config', {
+      method: 'PUT',
+      body: JSON.stringify(configData)
+    })
+  }
+
+  // Popups (public active popup)
+  async getActivePopup() {
+    return this.request('/popups/active', {
+      method: 'GET'
+    })
+  }
+
+  async getPopups() {
+    return this.request('/popups', {
+      method: 'GET'
+    })
+  }
+
+  async getPopup(id) {
+    return this.request(`/popups/${id}`, {
+      method: 'GET'
+    })
+  }
+
+  async createPopup(data) {
+    return this.request('/popups', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    })
+  }
+
+  async updatePopup(id, data) {
+    return this.request(`/popups/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    })
+  }
+
+  async deletePopup(id) {
+    return this.request(`/popups/${id}`, {
+      method: 'DELETE'
+    })
+  }
+
+  // Jackpot (public)
+  async getJackpot() {
+    return this.request('/jackpot', {
+      method: 'GET'
+    })
+  }
+
+  async updateJackpot(value) {
+    return this.request('/jackpot', {
+      method: 'PUT',
+      body: JSON.stringify({ value })
+    })
+  }
 }
 
 export default new ApiService()

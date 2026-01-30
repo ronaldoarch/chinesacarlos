@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import api from '../services/api'
 import './ProfileModal.css'
 
 function ProfileModal({
@@ -17,19 +18,19 @@ function ProfileModal({
   const { user } = useAuth()
   const [isClosing, setIsClosing] = useState(false)
   const [isIdCopied, setIsIdCopied] = useState(false)
-  
-  // Get user data
+  const [vipStatus, setVipStatus] = useState(null)
+
   const profileId = user?.id?.toString().slice(-9) || user?._id?.toString().slice(-9) || '000000000'
   const username = user?.username || 'Usuário'
   const userInitials = username.substring(0, 2).toUpperCase()
-  const vipLevel = user?.vipLevel || 0
+  const vipLevel = user?.vipLevel ?? vipStatus?.currentLevel ?? 0
   const nextVipLevel = vipLevel + 1
-  
-  // Calculate VIP progress (mockado por enquanto - precisa de API)
-  const vipProgress1 = 0 // user?.vipProgress1 || 0
-  const vipTarget1 = 50
-  const vipProgress2 = 0 // user?.vipProgress2 || 0
-  const vipTarget2 = 10
+
+  const nextLevel = vipStatus?.nextLevel
+  const vipProgress1 = vipStatus?.totalDeposits ?? 0
+  const vipTarget1 = nextLevel?.depositsRequired ?? 50
+  const vipProgress2 = vipStatus?.totalBets ?? 0
+  const vipTarget2 = nextLevel?.betsRequired ?? 10
   
   const formatCurrency = (value) =>
     new Intl.NumberFormat('pt-BR', {
@@ -43,6 +44,15 @@ function ProfileModal({
       setIsClosing(false)
     }
   }, [isOpen])
+
+  useEffect(() => {
+    if (!isOpen || !user) return
+    api.getVipStatus()
+      .then((res) => {
+        if (res.success && res.data) setVipStatus(res.data)
+      })
+      .catch(() => setVipStatus(null))
+  }, [isOpen, user])
 
   useEffect(() => {
     if (!isOpen) return

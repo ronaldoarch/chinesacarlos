@@ -77,7 +77,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  background: linear-gradient(135deg, #7a2b9e 0%, #3f1453 100%);
+  background: linear-gradient(135deg, var(--light-purple) 0%, var(--primary-purple) 100%);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
   padding: 12px 14px;

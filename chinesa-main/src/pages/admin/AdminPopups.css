@@ -1,0 +1,256 @@
+.admin-popups .admin-header {
+  margin-bottom: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.admin-popups .admin-header h1 {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--gold);
+}
+
+.admin-popups .section-description {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: var(--font-size-sm);
+}
+
+.admin-popups .btn-primary {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--gold);
+  color: var(--primary-purple);
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.admin-popups .popups-list {
+  margin-top: var(--spacing-lg);
+}
+
+.admin-popups .empty-state {
+  text-align: center;
+  padding: var(--spacing-xl);
+  background: rgba(106, 46, 132, 0.3);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.admin-popups .empty-state i {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.6;
+}
+
+.admin-popups .popups-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.admin-popups .popup-card {
+  background: linear-gradient(135deg, rgba(106, 46, 132, 0.9) 0%, rgba(63, 20, 83, 0.9) 100%);
+  border-radius: 12px;
+  padding: var(--spacing-md);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-popups .popup-card.inactive {
+  opacity: 0.7;
+}
+
+.admin-popups .popup-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.admin-popups .popup-title {
+  font-weight: bold;
+  color: var(--gold);
+}
+
+.admin-popups .popup-card-image {
+  width: 100%;
+  height: 120px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: var(--spacing-sm);
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.admin-popups .popup-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.admin-popups .popup-card-meta {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: var(--spacing-sm);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-popups .popup-card-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-popups .badge {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.admin-popups .badge-success {
+  background: rgba(76, 175, 80, 0.3);
+  color: #4caf50;
+}
+
+.admin-popups .badge-secondary {
+  background: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.admin-popups .btn-sm {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.admin-popups .btn-toggle {
+  background: rgba(33, 150, 243, 0.3);
+  color: #2196f3;
+}
+
+.admin-popups .btn-edit {
+  background: rgba(255, 193, 7, 0.3);
+  color: #ffc107;
+}
+
+.admin-popups .btn-delete {
+  background: rgba(244, 67, 54, 0.3);
+  color: #f44336;
+}
+
+/* Modal */
+.admin-popups .modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.admin-popups .modal-content {
+  background: linear-gradient(135deg, rgba(63, 20, 83, 0.98) 0%, rgba(40, 10, 60, 0.98) 100%);
+  border-radius: 12px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-popups .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-popups .modal-header h2 {
+  color: var(--gold);
+  font-size: var(--font-size-lg);
+}
+
+.admin-popups .modal-close {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.admin-popups .popup-modal form {
+  padding: var(--spacing-lg);
+}
+
+.admin-popups .popup-modal .form-group {
+  margin-bottom: var(--spacing-md);
+}
+
+.admin-popups .popup-modal .form-group label {
+  display: block;
+  color: var(--gold);
+  font-size: var(--font-size-sm);
+  margin-bottom: 4px;
+}
+
+.admin-popups .popup-modal .form-group input[type="text"],
+.admin-popups .popup-modal .form-group input[type="number"],
+.admin-popups .popup-modal .form-group input[type="datetime-local"],
+.admin-popups .popup-modal .form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--text-white);
+}
+
+.admin-popups .popup-modal .checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-white);
+  cursor: pointer;
+}
+
+.admin-popups .popup-modal .form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+}
+
+.admin-popups .modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-popups .btn-secondary {
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-white);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.admin-popups .btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

@@ -1,0 +1,151 @@
+.admin-bonus-config .admin-header {
+  margin-bottom: var(--spacing-lg);
+}
+
+.admin-bonus-config .config-section {
+  background: linear-gradient(135deg, rgba(106, 46, 132, 0.9) 0%, rgba(63, 20, 83, 0.9) 100%);
+  border-radius: 12px;
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-bonus-config .config-section h2 {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  color: var(--gold);
+  font-size: var(--font-size-lg);
+}
+
+.admin-bonus-config .config-section .section-description {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.admin-bonus-config .form-group {
+  max-width: 200px;
+}
+
+.admin-bonus-config .form-group input[type="number"] {
+  padding: var(--spacing-sm);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--text-white);
+  font-size: var(--font-size-md);
+}
+
+.admin-bonus-config .tiers-table-wrap {
+  overflow-x: auto;
+  margin-bottom: var(--spacing-md);
+}
+
+.admin-bonus-config .tiers-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-bonus-config .tiers-table th,
+.admin-bonus-config .tiers-table td {
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-bonus-config .tiers-table th {
+  color: var(--gold);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-sm);
+}
+
+.admin-bonus-config .tiers-table td input {
+  width: 100%;
+  max-width: 120px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--text-white);
+  font-size: var(--font-size-sm);
+}
+
+.admin-bonus-config .btn-icon {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.admin-bonus-config .btn-icon:hover {
+  color: #f44336;
+  background: rgba(244, 67, 54, 0.2);
+}
+
+.admin-bonus-config .btn-add-tier {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(76, 175, 80, 0.2);
+  color: #4caf50;
+  border: 1px solid rgba(76, 175, 80, 0.4);
+  border-radius: 8px;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.admin-bonus-config .btn-add-tier:hover {
+  background: rgba(76, 175, 80, 0.3);
+}
+
+.admin-bonus-config .config-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--spacing-xl);
+}
+
+.admin-bonus-config .save-btn {
+  border: none;
+  padding: var(--spacing-md) var(--spacing-xl);
+  border-radius: 8px;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--gold);
+  color: var(--primary-purple);
+}
+
+.admin-bonus-config .save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.admin-bonus-config .alert {
+  padding: var(--spacing-md);
+  border-radius: 8px;
+  margin-bottom: var(--spacing-md);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-bonus-config .alert-error {
+  background: rgba(244, 67, 54, 0.2);
+  border: 1px solid rgba(244, 67, 54, 0.4);
+  color: #f44336;
+}
+
+.admin-bonus-config .alert-success {
+  background: rgba(76, 175, 80, 0.2);
+  border: 1px solid rgba(76, 175, 80, 0.4);
+  color: #4caf50;
+}

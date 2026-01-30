@@ -8,6 +8,9 @@ import AdminGatewayConfig from '../pages/admin/AdminGatewayConfig'
 import AdminTheme from '../pages/admin/AdminTheme'
 import AdminAffiliates from '../pages/admin/AdminAffiliates'
 import AdminBanners from '../pages/admin/AdminBanners'
+import AdminBonusConfig from '../pages/admin/AdminBonusConfig'
+import AdminPopups from '../pages/admin/AdminPopups'
+import AdminJackpot from '../pages/admin/AdminJackpot'
 import './AdminLayout.css'
 
 function AdminLayout() {
@@ -184,6 +187,12 @@ function AdminLayout() {
         return <AdminAffiliates />
       case 'banners':
         return <AdminBanners />
+      case 'bonus':
+        return <AdminBonusConfig />
+      case 'popups':
+        return <AdminPopups />
+      case 'jackpot':
+        return <AdminJackpot />
       default:
         return <AdminDashboard />
     }
@@ -269,6 +278,33 @@ function AdminLayout() {
             >
               <i className="fa-solid fa-image"></i>
               <span>Banners & Logo</span>
+            </button>
+          </li>
+          <li>
+            <button
+              className={activePage === 'bonus' ? 'active' : ''}
+              onClick={() => setActivePage('bonus')}
+            >
+              <i className="fa-solid fa-gift"></i>
+              <span>Bônus</span>
+            </button>
+          </li>
+          <li>
+            <button
+              className={activePage === 'popups' ? 'active' : ''}
+              onClick={() => setActivePage('popups')}
+            >
+              <i className="fa-solid fa-window-maximize"></i>
+              <span>Popups</span>
+            </button>
+          </li>
+          <li>
+            <button
+              className={activePage === 'jackpot' ? 'active' : ''}
+              onClick={() => setActivePage('jackpot')}
+            >
+              <i className="fa-solid fa-coins"></i>
+              <span>Jackpot</span>
             </button>
           </li>
         </ul>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import QRCode from 'qrcode'
 import './PixPaymentModal.css'
 
 function PixPaymentModal({ isOpen, onClose, onBack, amountValue = 0, transaction = null }) {
@@ -6,16 +7,38 @@ function PixPaymentModal({ isOpen, onClose, onBack, amountValue = 0, transaction
   const [isCopied, setIsCopied] = useState(false)
   const [remainingSeconds, setRemainingSeconds] = useState(0)
   const [initialSeconds, setInitialSeconds] = useState(0)
-  
-  // Get PIX data from transaction (support base64 image)
+  const [generatedQrUrl, setGeneratedQrUrl] = useState('')
+  const [imgError, setImgError] = useState(false)
+
+  // Get PIX data from transaction
   const pixCode = transaction?.pixCopyPaste || transaction?.qrCode || ''
-  let qrCodeImage = transaction?.qrCodeImage || ''
-  if (qrCodeImage && !qrCodeImage.startsWith('data:') && !qrCodeImage.startsWith('http')) {
-    qrCodeImage = qrCodeImage.startsWith('base64,') ? `data:image/png;${qrCodeImage}` : `data:image/png;base64,${qrCodeImage}`
-  }
-  if (!qrCodeImage) qrCodeImage = '/qr-code-temporario.png'
   const expiresAt = transaction?.expiresAt ? new Date(transaction.expiresAt) : null
   const hasPixCode = !!pixCode
+
+  // Gerar QR a partir do código PIX (NXGATE envia paymentCodeBase64 como texto em base64, não imagem)
+  useEffect(() => {
+    if (!pixCode) {
+      setGeneratedQrUrl('')
+      return
+    }
+    setImgError(false)
+    QRCode.toDataURL(pixCode, { width: 260, margin: 2 })
+      .then(setGeneratedQrUrl)
+      .catch(() => setGeneratedQrUrl(''))
+  }, [pixCode])
+
+  useEffect(() => {
+    if (!isOpen) setImgError(false)
+  }, [isOpen])
+
+  // Imagem do QR: priorizar a gerada pelo código PIX; fallback para imagem do backend ou placeholder
+  let qrCodeImage = generatedQrUrl
+  if (!qrCodeImage && transaction?.qrCodeImage) {
+    const raw = transaction.qrCodeImage
+    const withPrefix = raw.startsWith('data:') ? raw : raw.startsWith('base64,') ? `data:image/png;${raw}` : `data:image/png;base64,${raw}`
+    qrCodeImage = withPrefix
+  }
+  if (!qrCodeImage) qrCodeImage = '/qr-code-temporario.png'
 
   useEffect(() => {
     if (isOpen && transaction && expiresAt) {
@@ -113,8 +136,12 @@ function PixPaymentModal({ isOpen, onClose, onBack, amountValue = 0, transaction
               <span className="pix-qr-badge">
                 <i className="fa-solid fa-qrcode"></i>
               </span>
-              {qrCodeImage ? (
-                <img src={qrCodeImage} alt="QR Code PIX" />
+              {qrCodeImage && (!imgError || qrCodeImage === generatedQrUrl) ? (
+                <img
+                  src={qrCodeImage}
+                  alt="QR Code PIX"
+                  onError={() => setImgError(true)}
+                />
               ) : (
                 <div className="pix-qr-placeholder">
                   <i className="fa-solid fa-qrcode"></i>

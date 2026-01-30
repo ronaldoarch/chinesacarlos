@@ -14,13 +14,16 @@ router.use(express.urlencoded({ extended: true }))
 // @access  Public (but should be validated in production)
 router.post('/pix', async (req, res) => {
   try {
-    const { idTransaction, status, type, data } = req.body
+    const body = req.body || {}
+    const { status, type, data } = body
+    // NXGATE and others may send idTransaction as idTransaction, transaction_id, tx_id, or inside data
+    const idTransaction = body.idTransaction || body.transactionId || body.transaction_id || body.tx_id || body?.data?.idTransaction
 
     // Respond immediately to avoid timeout
     res.status(200).json({ status: 'received' })
 
     if (!idTransaction) {
-      console.error('Webhook PIX: idTransaction não fornecido')
+      console.error('Webhook PIX: idTransaction não fornecido. Body:', JSON.stringify(body))
       return
     }
 
@@ -72,13 +75,15 @@ router.post('/pix', async (req, res) => {
 // @access  Public (but should be validated in production)
 router.post('/pix-withdraw', async (req, res) => {
   try {
-    const { idTransaction, type, status, amount, fee } = req.body
+    const body = req.body || {}
+    const { type, status, amount, fee } = body
+    const idTransaction = body.idTransaction || body.transactionId || body.transaction_id || body.tx_id || body?.data?.idTransaction
 
     // Respond immediately to avoid timeout
     res.status(200).json({ status: 'received' })
 
     if (!idTransaction) {
-      console.error('Webhook PIX Withdraw: idTransaction não fornecido')
+      console.error('Webhook PIX Withdraw: idTransaction não fornecido. Body:', JSON.stringify(body))
       return
     }
 

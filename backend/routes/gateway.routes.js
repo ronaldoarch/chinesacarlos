@@ -107,7 +107,7 @@ router.post('/test', protect, isAdmin, async (req, res) => {
         })
       }
       const data = result.data?.data || result.data || {}
-      const hasCode = data.pix_copy_and_paste || data.pixCopyPaste || data.copy_paste || data.codigo_pix || data.codigo || data.qr_code || data.qrcode || data.pix_copia_cola || data.brcode || data.emv || data.payload
+      const hasCode = data.paymentCode || data.pix_copy_and_paste || data.pixCopyPaste || data.copy_paste || data.codigo_pix || data.codigo || data.qr_code || data.qrcode || data.pix_copia_cola || data.brcode || data.emv || data.payload
       if (!hasCode) {
         console.warn('NXGATE test response (no PIX code found):', JSON.stringify(result.data, null, 2))
         return res.status(400).json({

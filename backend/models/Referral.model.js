@@ -48,8 +48,7 @@ const referralSchema = new mongoose.Schema(
   }
 )
 
-// Indexes
+// Indexes (referred already has unique index via schema)
 referralSchema.index({ referrer: 1, status: 1 })
-referralSchema.index({ referred: 1 })
 
 export default mongoose.model('Referral', referralSchema)

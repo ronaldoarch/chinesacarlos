@@ -76,12 +76,14 @@ router.post(
       const raw = pixData?.data || pixData || {}
       transaction.idTransaction = pixData?.idTransaction || pixData?.tx_id || raw?.idTransaction || raw?.tx_id
 
-      // Try all known field names for PIX copy-paste (different gateways use different names)
+      // NXGATE returns paymentCode and paymentCodeBase64 at top level
       const copyPaste =
+        pixData?.paymentCode || raw?.paymentCode ||
         raw?.pix_copy_and_paste || raw?.pixCopyPaste || raw?.copy_paste || raw?.qr_code || raw?.qrcode ||
         raw?.codigo_pix || raw?.codigo || raw?.pix_copia_cola || raw?.brcode || raw?.emv || raw?.payload ||
         pixData?.qrCode || pixData?.pixCopyPaste || pixData?.codigo_pix || pixData?.copy_paste
       const qrImage =
+        pixData?.paymentCodeBase64 || raw?.paymentCodeBase64 ||
         raw?.base_64_image_url || raw?.base_64_image || raw?.qrCodeImage || raw?.qr_code_image ||
         raw?.imagem_qr || raw?.qrcode_base64 || pixData?.qrCodeImage || pixData?.base_64_image
       const expDate = raw?.expiration_date || raw?.expiresAt || raw?.expires_at || raw?.expiracao || pixData?.expiration_date

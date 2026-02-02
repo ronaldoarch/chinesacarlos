@@ -3,9 +3,21 @@ import { body, validationResult } from 'express-validator'
 import { protect } from '../middleware/auth.middleware.js'
 import Transaction from '../models/Transaction.model.js'
 import User from '../models/User.model.js'
+import BonusConfig from '../models/BonusConfig.model.js'
+import GatewayConfig from '../models/GatewayConfig.model.js'
 import nxgateService from '../services/nxgate.service.js'
 
 const router = express.Router()
+
+async function getWebhookBaseUrl() {
+  try {
+    const config = await GatewayConfig.getConfig()
+    if (config?.webhookBaseUrl?.trim()) {
+      return config.webhookBaseUrl.replace(/\/$/, '')
+    }
+  } catch (_) {}
+  return (process.env.WEBHOOK_BASE_URL || 'http://localhost:5000').replace(/\/$/, '')
+}
 
 // @route   POST /api/payments/deposit
 // @desc    Create a PIX deposit
@@ -14,9 +26,7 @@ router.post(
   '/deposit',
   protect,
   [
-    body('amount')
-      .isFloat({ min: 10, max: 10000 })
-      .withMessage('Valor deve estar entre R$ 10,00 e R$ 10.000,00'),
+    body('amount').isFloat({ min: 0.01 }).withMessage('Valor inválido'),
     body('cpf')
       .optional()
       .custom((val) => !val || /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(val) || /^\d{11}$/.test(val))
@@ -33,6 +43,17 @@ router.post(
         })
       }
 
+      const depositConfig = await BonusConfig.getConfig()
+      const minDeposit = depositConfig.minDeposit ?? 10
+      const maxDeposit = depositConfig.maxDeposit ?? 10000
+      const amountNum = parseFloat(req.body.amount)
+      if (amountNum < minDeposit || amountNum > maxDeposit) {
+        return res.status(400).json({
+          success: false,
+          message: `Valor deve estar entre R$ ${minDeposit.toFixed(2)} e R$ ${maxDeposit.toFixed(2)}`
+        })
+      }
+
       let { amount, cpf } = req.body
       // Normalize CPF: accept 11 digits or formatted 000.000.000-00
       if (cpf && typeof cpf === 'string') {
@@ -43,6 +64,9 @@ router.post(
       }
       const user = req.user
 
+      const webhookBase = await getWebhookBaseUrl()
+      const webhookUrl = `${webhookBase}/api/webhooks/pix`
+
       // Create transaction record
       const transaction = await Transaction.create({
         user: user._id,
@@ -52,7 +76,7 @@ router.post(
         netAmount: parseFloat(amount),
         payerName: user.username,
         payerDocument: cpf.replace(/\D/g, ''),
-        webhookUrl: `${process.env.WEBHOOK_BASE_URL || 'http://localhost:5000'}/api/webhooks/pix`
+        webhookUrl
       })
 
       // Generate PIX via NXGATE
@@ -193,6 +217,9 @@ router.post(
         })
       }
 
+      const webhookBase = await getWebhookBaseUrl()
+      const webhookUrl = `${webhookBase}/api/webhooks/pix-withdraw`
+
       // Create transaction record
       const transaction = await Transaction.create({
         user: user._id,
@@ -202,7 +229,7 @@ router.post(
         netAmount: parseFloat(amount), // Will be updated with fee after webhook
         pixKey: pixKey,
         pixKeyType: pixKeyType,
-        webhookUrl: `${process.env.WEBHOOK_BASE_URL || 'http://localhost:5000'}/api/webhooks/pix-withdraw`
+        webhookUrl
       })
 
       // Process withdrawal via NXGATE

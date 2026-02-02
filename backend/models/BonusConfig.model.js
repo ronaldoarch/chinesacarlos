@@ -12,6 +12,20 @@ const chestTierSchema = new mongoose.Schema({
 
 const bonusConfigSchema = new mongoose.Schema(
   {
+    // Valor mínimo de depósito (R$)
+    minDeposit: {
+      type: Number,
+      default: 10,
+      min: 1,
+      max: 100000
+    },
+    // Valor máximo de depósito (R$)
+    maxDeposit: {
+      type: Number,
+      default: 10000,
+      min: 1,
+      max: 1000000
+    },
     // Bônus no primeiro depósito (% sobre o valor)
     firstDepositBonusPercent: {
       type: Number,

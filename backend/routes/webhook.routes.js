@@ -49,8 +49,11 @@ router.post('/pix', async (req, res) => {
   try {
     const body = req.body || {}
     const { status, type, data } = body
-    // NXGATE and others may send idTransaction as idTransaction, transaction_id, tx_id, or inside data
-    const idTransaction = body.idTransaction || body.transactionId || body.transaction_id || body.tx_id || body?.data?.idTransaction
+    // NXGATE and others may send idTransaction in various formats
+    const idTransaction =
+      body.idTransaction || body.transactionId || body.transaction_id || body.tx_id || body.id ||
+      body?.data?.idTransaction || body?.data?.id || body?.data?.tx_id ||
+      body?.data?.transaction_id
 
     // Respond immediately to avoid timeout
     res.status(200).json({ status: 'received' })
@@ -68,14 +71,28 @@ router.post('/pix', async (req, res) => {
       return
     }
 
-    // Handle different webhook formats
-    let paymentStatus = status
+    // Handle different webhook formats (NXGATE, XGate, etc.)
+    const rawStatus = (status ?? body.status ?? data?.status ?? '').toString().toUpperCase()
+    const rawType = (type ?? body.type ?? data?.type ?? '').toString().toUpperCase()
+    let paymentStatus = 'pending'
     let webhookData = data || req.body
 
-    if (type === 'QR_CODE_COPY_AND_PASTE_PAID' || status === 'paid' || status === 'PAID') {
+    if (
+      rawType.includes('PAID') ||
+      rawType === 'QR_CODE_COPY_AND_PASTE_PAID' ||
+      rawStatus === 'PAID' ||
+      rawStatus === 'PAYED' ||
+      rawStatus === 'CONFIRMED' ||
+      rawStatus === 'PAYMENT_CONFIRMED' ||
+      rawStatus === 'SUCCESS' ||
+      rawStatus === 'COMPLETED' ||
+      rawStatus === 'APPROVED'
+    ) {
       paymentStatus = 'paid'
-    } else if (status === 'failed' || status === 'FAILED' || status === 'ERROR') {
+    } else if (rawStatus === 'FAILED' || rawStatus === 'ERROR' || rawStatus === 'REJECTED' || rawStatus === 'REFUSED') {
       paymentStatus = 'failed'
+    } else if (rawStatus || rawType) {
+      console.warn(`Webhook PIX: status/type não reconhecido. status="${rawStatus}" type="${rawType}". Body:`, JSON.stringify(body).slice(0, 500))
     }
 
     // Update transaction status
@@ -108,8 +125,7 @@ router.post('/pix', async (req, res) => {
     console.log(`Webhook PIX: Transação ${idTransaction} atualizada para ${paymentStatus}`)
   } catch (error) {
     console.error('Webhook PIX Error:', error)
-    // Still return 200 to avoid retries
-    res.status(200).json({ status: 'received', error: error.message })
+    if (!res.headersSent) res.status(200).json({ status: 'received', error: error.message })
   }
 })
 
@@ -121,7 +137,9 @@ router.post('/pix-withdraw', async (req, res) => {
   try {
     const body = req.body || {}
     const { type, status, amount, fee } = body
-    const idTransaction = body.idTransaction || body.transactionId || body.transaction_id || body.tx_id || body?.data?.idTransaction
+    const idTransaction =
+      body.idTransaction || body.transactionId || body.transaction_id || body.tx_id || body.id ||
+      body?.data?.idTransaction || body?.data?.id || body?.data?.tx_id
 
     // Respond immediately to avoid timeout
     res.status(200).json({ status: 'received' })
@@ -193,8 +211,7 @@ router.post('/pix-withdraw', async (req, res) => {
     console.log(`Webhook PIX Withdraw: Transação ${idTransaction} atualizada para ${paymentStatus}`)
   } catch (error) {
     console.error('Webhook PIX Withdraw Error:', error)
-    // Still return 200 to avoid retries
-    res.status(200).json({ status: 'received', error: error.message })
+    if (!res.headersSent) res.status(200).json({ status: 'received', error: error.message })
   }
 })
 

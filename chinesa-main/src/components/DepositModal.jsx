@@ -23,6 +23,8 @@ function DepositModal({ isOpen, onClose, showCpfField = true, onConfirmDeposit, 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [quickAmounts, setQuickAmounts] = useState(DEFAULT_QUICK_AMOUNTS)
+  const [minDeposit, setMinDeposit] = useState(10)
+  const [maxDeposit, setMaxDeposit] = useState(10000)
 
   useEffect(() => {
     if (isOpen) {
@@ -51,18 +53,28 @@ function DepositModal({ isOpen, onClose, showCpfField = true, onConfirmDeposit, 
     if (!isOpen) return
     api.getBonusConfig()
       .then((res) => {
-        if (res.success && res.data && Array.isArray(res.data.depositTiers) && res.data.depositTiers.length > 0) {
-          const tiers = res.data.depositTiers
-            .filter((t) => Number(t.amount) > 0)
-            .sort((a, b) => Number(a.amount) - Number(b.amount))
-          if (tiers.length > 0) {
-            setQuickAmounts(tiers.map((t, i) => ({
-              id: i + 1,
-              value: `R$ ${Number(t.amount)}`,
-              amount: Number(t.amount),
-              bonusPercent: Number(t.bonusPercent) || 0,
-              full: i === tiers.length - 1
-            })))
+        if (res.success && res.data) {
+          const d = res.data
+          if (d.minDeposit != null) setMinDeposit(Number(d.minDeposit) || 10)
+          if (d.maxDeposit != null) setMaxDeposit(Number(d.maxDeposit) || 10000)
+          if (Array.isArray(d.depositTiers) && d.depositTiers.length > 0) {
+            const min = Number(d.minDeposit) || 10
+            const max = Number(d.maxDeposit) || 10000
+            const tiers = d.depositTiers
+              .filter((t) => {
+                const amt = Number(t.amount)
+                return amt > 0 && amt >= min && amt <= max
+              })
+              .sort((a, b) => Number(a.amount) - Number(b.amount))
+            if (tiers.length > 0) {
+              setQuickAmounts(tiers.map((t, i) => ({
+                id: i + 1,
+                value: `R$ ${Number(t.amount)}`,
+                amount: Number(t.amount),
+                bonusPercent: Number(t.bonusPercent) || 0,
+                full: i === tiers.length - 1
+              })))
+            }
           }
         }
       })
@@ -108,8 +120,8 @@ function DepositModal({ isOpen, onClose, showCpfField = true, onConfirmDeposit, 
 
     const normalized = sanitized.replace(',', '.')
     const numericValue = Number.parseFloat(normalized || '0')
-    if (!Number.isNaN(numericValue) && numericValue > 10000) {
-      setDepositAmount('10000')
+    if (!Number.isNaN(numericValue) && numericValue > maxDeposit) {
+      setDepositAmount(String(maxDeposit))
     } else {
       setDepositAmount(sanitized)
     }
@@ -133,7 +145,7 @@ function DepositModal({ isOpen, onClose, showCpfField = true, onConfirmDeposit, 
 
   const normalizedAmount = depositAmount.replace(',', '.')
   const parsedAmount = Number.parseFloat(normalizedAmount || '0') || 0
-  const amountValue = Math.min(parsedAmount, 10000)
+  const amountValue = Math.min(Math.max(parsedAmount, 0), maxDeposit)
   const selectedAmount = quickAmounts.find((amount) => amount.id === selectedAmountId)
   const matchedAmount = quickAmounts.find((amount) => amount.amount === amountValue)
   const tierForValue = quickAmounts.filter((t) => t.amount <= amountValue).sort((a, b) => b.amount - a.amount)[0]
@@ -151,8 +163,8 @@ function DepositModal({ isOpen, onClose, showCpfField = true, onConfirmDeposit, 
     }).format(value)
 
   const handleConfirmDeposit = async () => {
-    if (amountValue < 10 || amountValue > 10000) {
-      setError('Valor deve estar entre R$ 10,00 e R$ 10.000,00')
+    if (amountValue < minDeposit || amountValue > maxDeposit) {
+      setError(`Valor deve estar entre R$ ${minDeposit.toFixed(2)} e R$ ${maxDeposit.toFixed(2)}`)
       return
     }
     
@@ -245,7 +257,7 @@ function DepositModal({ isOpen, onClose, showCpfField = true, onConfirmDeposit, 
           </div>
 
           <div className="deposit-limits">
-            Min: R$ 10,00 - Max: R$ 10.000,00
+            Min: R$ {minDeposit.toFixed(2)} - Max: R$ {maxDeposit.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
 
           {amountValue > 0 && showCpfField && (

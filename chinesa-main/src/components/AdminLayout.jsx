@@ -9,6 +9,7 @@ import AdminTheme from '../pages/admin/AdminTheme'
 import AdminAffiliates from '../pages/admin/AdminAffiliates'
 import AdminBanners from '../pages/admin/AdminBanners'
 import AdminBonusConfig from '../pages/admin/AdminBonusConfig'
+import AdminDepositLimits from '../pages/admin/AdminDepositLimits'
 import AdminPopups from '../pages/admin/AdminPopups'
 import AdminJackpot from '../pages/admin/AdminJackpot'
 import AdminTracking from '../pages/admin/AdminTracking'
@@ -192,6 +193,8 @@ function AdminLayout() {
         return <AdminBanners />
       case 'bonus':
         return <AdminBonusConfig />
+      case 'deposit-limits':
+        return <AdminDepositLimits />
       case 'popups':
         return <AdminPopups />
       case 'jackpot':
@@ -296,6 +299,15 @@ function AdminLayout() {
             >
               <i className="fa-solid fa-gift"></i>
               <span>Bônus</span>
+            </button>
+          </li>
+          <li>
+            <button
+              className={activePage === 'deposit-limits' ? 'active' : ''}
+              onClick={() => setActivePage('deposit-limits')}
+            >
+              <i className="fa-solid fa-wallet"></i>
+              <span>Limites Depósito</span>
             </button>
           </li>
           <li>

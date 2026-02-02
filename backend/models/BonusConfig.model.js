@@ -26,6 +26,20 @@ const bonusConfigSchema = new mongoose.Schema(
       min: 1,
       max: 1000000
     },
+    // Valor mínimo de saque (R$)
+    minWithdraw: {
+      type: Number,
+      default: 20,
+      min: 1,
+      max: 100000
+    },
+    // Valor máximo de saque (R$)
+    maxWithdraw: {
+      type: Number,
+      default: 5000,
+      min: 1,
+      max: 1000000
+    },
     // Bônus no primeiro depósito (% sobre o valor)
     firstDepositBonusPercent: {
       type: Number,

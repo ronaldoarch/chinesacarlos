@@ -4,6 +4,16 @@ import './AdminTracking.css'
 
 const TAB_WEBHOOKS = 'webhooks'
 const TAB_FACEBOOK = 'facebook'
+const TAB_CONFIG = 'config'
+
+const FACEBOOK_EVENTS = [
+  { value: 'Lead', label: 'Lead (cadastro)' },
+  { value: 'CompleteRegistration', label: 'CompleteRegistration' },
+  { value: 'Purchase', label: 'Purchase (primeiro depósito)' },
+  { value: 'AddToCart', label: 'AddToCart' },
+  { value: 'InitiateCheckout', label: 'InitiateCheckout' },
+  { value: 'ViewContent', label: 'ViewContent' }
+]
 
 function AdminTracking() {
   const [tab, setTab] = useState(TAB_WEBHOOKS)
@@ -21,13 +31,28 @@ function AdminTracking() {
     from: '',
     to: ''
   })
+  const [configLoading, setConfigLoading] = useState(false)
+  const [configSaving, setConfigSaving] = useState(false)
+  const [configError, setConfigError] = useState(null)
+  const [configSuccess, setConfigSuccess] = useState(null)
+  const [config, setConfig] = useState({
+    facebookPixelId: '',
+    facebookAccessToken: '',
+    webhookBaseUrl: '',
+    activeFacebookEvents: ['Lead', 'CompleteRegistration', 'Purchase']
+  })
 
   const limit = 30
 
   useEffect(() => {
     if (tab === TAB_WEBHOOKS) loadWebhooks()
-    else loadFacebookEvents()
+    else if (tab === TAB_FACEBOOK) loadFacebookEvents()
+    else if (tab === TAB_CONFIG) loadConfig()
   }, [tab, page, filters])
+
+  useEffect(() => {
+    if (tab === TAB_CONFIG) loadConfig()
+  }, [tab])
 
   const loadWebhooks = async () => {
     try {
@@ -73,6 +98,57 @@ function AdminTracking() {
     }
   }
 
+  const loadConfig = async () => {
+    try {
+      setConfigLoading(true)
+      setConfigError(null)
+      const res = await api.getTrackingConfig()
+      if (res.success && res.data) {
+        setConfig({
+          facebookPixelId: res.data.facebookPixelId || '',
+          facebookAccessToken: res.data.facebookAccessToken || '',
+          webhookBaseUrl: res.data.webhookBaseUrl || '',
+          activeFacebookEvents: Array.isArray(res.data.activeFacebookEvents) 
+            ? res.data.activeFacebookEvents 
+            : ['Lead', 'CompleteRegistration', 'Purchase']
+        })
+      } else setConfigError(res.message || 'Erro ao carregar configuração')
+    } catch (err) {
+      setConfigError(err.message || 'Erro ao carregar configuração')
+    } finally {
+      setConfigLoading(false)
+    }
+  }
+
+  const handleSaveConfig = async () => {
+    try {
+      setConfigSaving(true)
+      setConfigError(null)
+      setConfigSuccess(null)
+      const res = await api.updateTrackingConfig(config)
+      if (res.success) {
+        setConfigSuccess('Configuração salva com sucesso!')
+        setTimeout(() => setConfigSuccess(null), 3000)
+      } else {
+        setConfigError(res.message || 'Erro ao salvar configuração')
+      }
+    } catch (err) {
+      setConfigError(err.message || 'Erro ao salvar configuração')
+    } finally {
+      setConfigSaving(false)
+    }
+  }
+
+  const toggleFacebookEvent = (eventValue) => {
+    setConfig(prev => {
+      const events = prev.activeFacebookEvents || []
+      const newEvents = events.includes(eventValue)
+        ? events.filter(e => e !== eventValue)
+        : [...events, eventValue]
+      return { ...prev, activeFacebookEvents: newEvents }
+    })
+  }
+
   const formatDate = (d) => {
     if (!d) return '-'
     const date = new Date(d)
@@ -107,6 +183,14 @@ function AdminTracking() {
         >
           <i className="fa-brands fa-facebook"></i>
           Eventos Facebook / Meta
+        </button>
+        <button
+          type="button"
+          className={tab === TAB_CONFIG ? 'active' : ''}
+          onClick={() => { setTab(TAB_CONFIG); setPage(1) }}
+        >
+          <i className="fa-solid fa-gear"></i>
+          Configuração
         </button>
       </div>
 
@@ -276,6 +360,107 @@ function AdminTracking() {
               </div>
             )}
           </div>
+        </>
+      )}
+
+      {tab === TAB_CONFIG && (
+        <>
+          {configLoading ? (
+            <div className="tracking-loading">
+              <i className="fa-solid fa-spinner fa-spin"></i> Carregando configuração...
+            </div>
+          ) : (
+            <div className="tracking-config-section">
+              {configError && (
+                <div className="tracking-config-error">
+                  <i className="fa-solid fa-circle-exclamation"></i>
+                  <span>{configError}</span>
+                </div>
+              )}
+              {configSuccess && (
+                <div className="tracking-config-success">
+                  <i className="fa-solid fa-circle-check"></i>
+                  <span>{configSuccess}</span>
+                </div>
+              )}
+
+              <div className="config-form-section">
+                <h2><i className="fa-brands fa-facebook"></i> Facebook / Meta</h2>
+                <div className="config-form-group">
+                  <label>Pixel ID</label>
+                  <input
+                    type="text"
+                    value={config.facebookPixelId}
+                    onChange={(e) => setConfig({ ...config, facebookPixelId: e.target.value })}
+                    placeholder="Ex: 123456789012345"
+                  />
+                  <small>ID do Pixel do Facebook para rastreamento de conversões</small>
+                </div>
+                <div className="config-form-group">
+                  <label>Access Token</label>
+                  <input
+                    type="password"
+                    value={config.facebookAccessToken}
+                    onChange={(e) => setConfig({ ...config, facebookAccessToken: e.target.value })}
+                    placeholder="Token de acesso do Facebook"
+                  />
+                  <small>Token de acesso para enviar eventos via Conversions API</small>
+                </div>
+                <div className="config-form-group">
+                  <label>Eventos Ativos</label>
+                  <div className="config-events-grid">
+                    {FACEBOOK_EVENTS.map(event => (
+                      <label key={event.value} className="config-event-checkbox">
+                        <input
+                          type="checkbox"
+                          checked={config.activeFacebookEvents.includes(event.value)}
+                          onChange={() => toggleFacebookEvent(event.value)}
+                        />
+                        <span>{event.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <small>Selecione quais eventos do Facebook devem ser enviados</small>
+                </div>
+              </div>
+
+              <div className="config-form-section">
+                <h2><i className="fa-solid fa-webhook"></i> Webhook</h2>
+                <div className="config-form-group">
+                  <label>URL Base do Webhook</label>
+                  <input
+                    type="url"
+                    value={config.webhookBaseUrl}
+                    onChange={(e) => setConfig({ ...config, webhookBaseUrl: e.target.value })}
+                    placeholder="https://seu-backend.com"
+                  />
+                  <small>URL base onde os webhooks serão recebidos (ex: https://backend.com - sem barra no final)</small>
+                  <div className="config-webhook-info">
+                    <p><strong>URLs esperadas:</strong></p>
+                    <ul>
+                      <li>Depósitos: <code>{config.webhookBaseUrl || 'https://seu-backend.com'}/api/webhooks/pix</code></li>
+                      <li>Saques: <code>{config.webhookBaseUrl || 'https://seu-backend.com'}/api/webhooks/pix-withdraw</code></li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div className="config-form-actions">
+                <button
+                  type="button"
+                  className="config-save-btn"
+                  onClick={handleSaveConfig}
+                  disabled={configSaving}
+                >
+                  {configSaving ? (
+                    <><i className="fa-solid fa-spinner fa-spin"></i> Salvando...</>
+                  ) : (
+                    <><i className="fa-solid fa-save"></i> Salvar Configuração</>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
         </>
       )}
 

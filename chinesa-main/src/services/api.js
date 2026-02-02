@@ -406,6 +406,17 @@ class ApiService {
     return this.request(`/admin/tracking/facebook-events${q ? '?' + q : ''}`, { method: 'GET' })
   }
 
+  async getTrackingConfig() {
+    return this.request('/admin/tracking/config', { method: 'GET' })
+  }
+
+  async updateTrackingConfig(configData) {
+    return this.request('/admin/tracking/config', {
+      method: 'PUT',
+      body: JSON.stringify(configData)
+    })
+  }
+
   // Bonus config (public for deposit modal)
   async getBonusConfig() {
     return this.request('/bonus/config', {

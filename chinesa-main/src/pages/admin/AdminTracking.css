@@ -202,3 +202,176 @@
   border-radius: 4px;
   font-size: 0.85rem;
 }
+
+.tracking-config-section {
+  background: linear-gradient(135deg, rgba(106, 46, 132, 0.9) 0%, rgba(63, 20, 83, 0.9) 100%);
+  border-radius: 12px;
+  padding: var(--spacing-lg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tracking-config-error {
+  padding: var(--spacing-md);
+  border-radius: 8px;
+  margin-bottom: var(--spacing-md);
+  background: rgba(244, 67, 54, 0.2);
+  border: 1px solid rgba(244, 67, 54, 0.4);
+  color: #f44336;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tracking-config-success {
+  padding: var(--spacing-md);
+  border-radius: 8px;
+  margin-bottom: var(--spacing-md);
+  background: rgba(76, 175, 80, 0.2);
+  border: 1px solid rgba(76, 175, 80, 0.4);
+  color: #4caf50;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.config-form-section {
+  margin-bottom: var(--spacing-xl);
+}
+
+.config-form-section:last-of-type {
+  margin-bottom: 0;
+}
+
+.config-form-section h2 {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  color: var(--gold);
+  font-size: var(--font-size-lg);
+}
+
+.config-form-group {
+  margin-bottom: var(--spacing-lg);
+}
+
+.config-form-group label {
+  display: block;
+  margin-bottom: var(--spacing-xs);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+.config-form-group input[type="text"],
+.config-form-group input[type="url"],
+.config-form-group input[type="password"] {
+  width: 100%;
+  max-width: 600px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--text-white);
+  font-size: var(--font-size-md);
+}
+
+.config-form-group small {
+  display: block;
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+}
+
+.config-events-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+}
+
+.config-event-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: var(--spacing-sm);
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.9);
+  transition: background 0.2s;
+}
+
+.config-event-checkbox:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.config-event-checkbox input[type="checkbox"] {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+
+.config-webhook-info {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: var(--font-size-sm);
+}
+
+.config-webhook-info p {
+  margin-bottom: var(--spacing-xs);
+  font-weight: 600;
+}
+
+.config-webhook-info ul {
+  margin: var(--spacing-xs) 0 0 var(--spacing-md);
+  padding: 0;
+  list-style: disc;
+}
+
+.config-webhook-info li {
+  margin-bottom: 4px;
+}
+
+.config-webhook-info code {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: var(--gold);
+}
+
+.config-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.config-save-btn {
+  border: none;
+  padding: var(--spacing-md) var(--spacing-xl);
+  border-radius: 8px;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--gold);
+  color: var(--primary-purple);
+  transition: opacity 0.2s;
+}
+
+.config-save-btn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.config-save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

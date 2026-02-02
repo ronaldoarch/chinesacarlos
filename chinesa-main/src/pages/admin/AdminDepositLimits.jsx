@@ -11,6 +11,8 @@ function AdminDepositLimits() {
   const [success, setSuccess] = useState(null)
   const [minDeposit, setMinDeposit] = useState(10)
   const [maxDeposit, setMaxDeposit] = useState(10000)
+  const [minWithdraw, setMinWithdraw] = useState(20)
+  const [maxWithdraw, setMaxWithdraw] = useState(5000)
 
   useEffect(() => {
     if (!isAdmin) {
@@ -28,6 +30,8 @@ function AdminDepositLimits() {
         const c = response.data
         setMinDeposit(c.minDeposit ?? 10)
         setMaxDeposit(c.maxDeposit ?? 10000)
+        setMinWithdraw(c.minWithdraw ?? 20)
+        setMaxWithdraw(c.maxWithdraw ?? 5000)
       }
     } catch (err) {
       setError(err.message || 'Erro ao carregar configuração')
@@ -37,18 +41,33 @@ function AdminDepositLimits() {
   }
 
   const handleSave = async () => {
-    const min = Number(minDeposit)
-    const max = Number(maxDeposit)
-    if (Number.isNaN(min) || min < 1) {
-      setError('Valor mínimo deve ser pelo menos R$ 1,00')
+    const minDep = Number(minDeposit)
+    const maxDep = Number(maxDeposit)
+    const minWit = Number(minWithdraw)
+    const maxWit = Number(maxWithdraw)
+    
+    if (Number.isNaN(minDep) || minDep < 1) {
+      setError('Valor mínimo de depósito deve ser pelo menos R$ 1,00')
       return
     }
-    if (Number.isNaN(max) || max < 1) {
-      setError('Valor máximo deve ser pelo menos R$ 1,00')
+    if (Number.isNaN(maxDep) || maxDep < 1) {
+      setError('Valor máximo de depósito deve ser pelo menos R$ 1,00')
       return
     }
-    if (min > max) {
-      setError('Valor mínimo não pode ser maior que o valor máximo')
+    if (minDep > maxDep) {
+      setError('Valor mínimo de depósito não pode ser maior que o valor máximo')
+      return
+    }
+    if (Number.isNaN(minWit) || minWit < 1) {
+      setError('Valor mínimo de saque deve ser pelo menos R$ 1,00')
+      return
+    }
+    if (Number.isNaN(maxWit) || maxWit < 1) {
+      setError('Valor máximo de saque deve ser pelo menos R$ 1,00')
+      return
+    }
+    if (minWit > maxWit) {
+      setError('Valor mínimo de saque não pode ser maior que o valor máximo')
       return
     }
 
@@ -56,9 +75,14 @@ function AdminDepositLimits() {
       setSaving(true)
       setError(null)
       setSuccess(null)
-      const response = await api.updateBonusConfig({ minDeposit: min, maxDeposit: max })
+      const response = await api.updateBonusConfig({ 
+        minDeposit: minDep, 
+        maxDeposit: maxDep,
+        minWithdraw: minWit,
+        maxWithdraw: maxWit
+      })
       if (response.success) {
-        setSuccess('Limites de depósito salvos com sucesso!')
+        setSuccess('Limites de depósito e saque salvos com sucesso!')
         setTimeout(() => setSuccess(null), 3000)
       } else {
         setError(response.message || 'Erro ao salvar')
@@ -96,7 +120,7 @@ function AdminDepositLimits() {
       <div className="admin-container">
         <div className="admin-loading">
           <i className="fa-solid fa-spinner fa-spin"></i>
-          <p>Carregando limites de depósito...</p>
+          <p>Carregando limites de depósito e saque...</p>
         </div>
       </div>
     )
@@ -107,10 +131,10 @@ function AdminDepositLimits() {
       <div className="admin-header">
         <h1>
           <i className="fa-solid fa-wallet"></i>
-          Limites de Depósito
+          Limites de Depósito e Saque
         </h1>
         <p className="section-description">
-          Configure o valor mínimo e máximo permitido para depósitos PIX. Os usuários só poderão depositar valores dentro desta faixa.
+          Configure os valores mínimos e máximos permitidos para depósitos e saques PIX. Os usuários só poderão realizar transações dentro destas faixas.
         </p>
       </div>
 
@@ -128,7 +152,7 @@ function AdminDepositLimits() {
       )}
 
       <div className="config-section">
-        <h2><i className="fa-solid fa-coins"></i> Valores permitidos</h2>
+        <h2><i className="fa-solid fa-arrow-down"></i> Limites de Depósito</h2>
         <div className="limits-grid">
           <div className="form-group">
             <label>Valor mínimo (R$)</label>
@@ -159,7 +183,43 @@ function AdminDepositLimits() {
         </div>
         <div className="limits-preview">
           <i className="fa-solid fa-info-circle"></i>
-          <span>Os usuários verão: Min: {formatBr(minDeposit)} - Max: {formatBr(maxDeposit)}</span>
+          <span>Depósitos: Min: {formatBr(minDeposit)} - Max: {formatBr(maxDeposit)}</span>
+        </div>
+      </div>
+
+      <div className="config-section">
+        <h2><i className="fa-solid fa-arrow-up"></i> Limites de Saque</h2>
+        <div className="limits-grid">
+          <div className="form-group">
+            <label>Valor mínimo (R$)</label>
+            <input
+              type="number"
+              min="1"
+              max="100000"
+              step="1"
+              value={minWithdraw}
+              onChange={(e) => setMinWithdraw(e.target.value)}
+              placeholder="20"
+            />
+            <small>Ex: 20</small>
+          </div>
+          <div className="form-group">
+            <label>Valor máximo (R$)</label>
+            <input
+              type="number"
+              min="1"
+              max="1000000"
+              step="1"
+              value={maxWithdraw}
+              onChange={(e) => setMaxWithdraw(e.target.value)}
+              placeholder="5000"
+            />
+            <small>Ex: 5000</small>
+          </div>
+        </div>
+        <div className="limits-preview">
+          <i className="fa-solid fa-info-circle"></i>
+          <span>Saques: Min: {formatBr(minWithdraw)} - Max: {formatBr(maxWithdraw)}</span>
         </div>
       </div>
 
@@ -173,7 +233,7 @@ function AdminDepositLimits() {
           {saving ? (
             <><i className="fa-solid fa-spinner fa-spin"></i> Salvando...</>
           ) : (
-            <><i className="fa-solid fa-save"></i> Salvar limites</>
+            <><i className="fa-solid fa-save"></i> Salvar limites de depósito e saque</>
           )}
         </button>
       </div>

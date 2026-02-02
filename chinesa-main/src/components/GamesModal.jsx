@@ -13,6 +13,7 @@ function GamesModal({
   onLoginClick,
   onMenuClick,
   onDepositClick,
+  onRefreshBalance,
   onPromotionsClick,
   onInviteClick,
   isMenuOpen,
@@ -168,6 +169,7 @@ function GamesModal({
         onLoginClick={onLoginClick}
         onMenuClick={onMenuClick}
         onDepositClick={onDepositClick}
+        onRefreshBalance={onRefreshBalance}
         isMenuOpen={isMenuOpen}
         isLoggedIn={isLoggedIn}
         balance={balance}

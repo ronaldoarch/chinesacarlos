@@ -197,7 +197,7 @@ router.get('/selected', async (req, res) => {
 })
 
 // @route   POST /api/games/launch
-// @desc    Launch a game
+// @desc    Launch a game - syncs user balance to igamewin so it appears in the game
 // @access  Private
 router.post('/launch', protect, async (req, res) => {
   try {
@@ -211,8 +211,9 @@ router.post('/launch', protect, async (req, res) => {
       })
     }
 
-    // Create user in igamewin if not exists
     const userCode = user._id.toString()
+
+    // Create user in igamewin if not exists
     try {
       await igamewinService.createUser(userCode)
     } catch (error) {
@@ -220,9 +221,39 @@ router.post('/launch', protect, async (req, res) => {
       console.log('User creation:', error.message)
     }
 
+    // Recover any balance stuck in igamewin from previous session (user closed without syncing)
+    try {
+      const moneyInfo = await igamewinService.getMoneyInfo(userCode)
+      if (moneyInfo.status === 1) {
+        const igamewinBalance = Number(
+          moneyInfo.user?.balance ?? moneyInfo.user_balance ?? moneyInfo.balance ?? 0
+        )
+        if (igamewinBalance > 0) {
+          const withdrawRes = await igamewinService.withdrawUserBalance(userCode, igamewinBalance)
+          if (withdrawRes.status === 1) {
+            user.balance = (user.balance || 0) + igamewinBalance
+            await user.save()
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Recover igamewin balance:', err.message)
+    }
+
+    // Deposit user balance to igamewin so it appears in the game
+    const amountToDeposit = Math.max(0, user.balance || 0)
+    if (amountToDeposit > 0) {
+      const depositRes = await igamewinService.depositUserBalance(userCode, amountToDeposit)
+      if (depositRes.status === 1) {
+        user.balance -= amountToDeposit
+        user.bonusBalance = Math.min(user.bonusBalance || 0, user.balance)
+        await user.save()
+      }
+    }
+
     // Launch game
     const response = await igamewinService.launchGame(userCode, providerCode, gameCode, lang)
-    
+
     if (response.status === 1) {
       res.json({
         success: true,
@@ -343,6 +374,60 @@ router.post('/withdraw', protect, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Erro ao realizar saque',
+      error: error.message
+    })
+  }
+})
+
+// @route   POST /api/games/sync-balance
+// @desc    Withdraw balance from igamewin back to user (call when user returns from game)
+// @access  Private
+router.post('/sync-balance', protect, async (req, res) => {
+  try {
+    const user = req.user
+    const userCode = user._id.toString()
+
+    const moneyInfo = await igamewinService.getMoneyInfo(userCode)
+    if (moneyInfo.status !== 1) {
+      return res.json({
+        success: true,
+        data: { balance: user.balance, synced: false }
+      })
+    }
+
+    const igamewinBalance = Number(
+      moneyInfo.user?.balance ?? moneyInfo.user_balance ?? moneyInfo.balance ?? 0
+    )
+    if (igamewinBalance <= 0) {
+      return res.json({
+        success: true,
+        data: { balance: user.balance, synced: true }
+      })
+    }
+
+    const withdrawRes = await igamewinService.withdrawUserBalance(userCode, igamewinBalance)
+    if (withdrawRes.status === 1) {
+      user.balance = (user.balance || 0) + igamewinBalance
+      await user.save()
+      return res.json({
+        success: true,
+        data: {
+          balance: user.balance,
+          synced: true,
+          amountRecovered: igamewinBalance
+        }
+      })
+    }
+
+    res.json({
+      success: true,
+      data: { balance: user.balance, synced: false }
+    })
+  } catch (error) {
+    console.error('Sync balance error:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao sincronizar saldo',
       error: error.message
     })
   }

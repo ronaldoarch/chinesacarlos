@@ -192,6 +192,12 @@ class ApiService {
     })
   }
 
+  async syncGameBalance() {
+    return this.request('/games/sync-balance', {
+      method: 'POST'
+    })
+  }
+
   async depositGameBalance(amount) {
     return this.request('/games/deposit', {
       method: 'POST',

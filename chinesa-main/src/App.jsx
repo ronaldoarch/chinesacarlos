@@ -29,7 +29,7 @@ import PopupPromoModal from './components/PopupPromoModal'
 import './styles/App.css'
 
 function AppContent() {
-  const { isAuthenticated, user, logout } = useAuth()
+  const { isAuthenticated, user, logout, refreshUser } = useAuth()
   const [isAuthOpen, setIsAuthOpen] = React.useState(false)
   const [authTab, setAuthTab] = React.useState('register')
   const [isPromotionsOpen, setIsPromotionsOpen] = React.useState(false)
@@ -86,6 +86,24 @@ function AppContent() {
 
   const balance = user ? formatBalance(user.balance) : 'R$ 0,00'
 
+  const handleRefreshBalance = async () => {
+    if (isAuthenticated) await refreshUser()
+  }
+
+  React.useEffect(() => {
+    if (!isAuthenticated) return
+    const onVisibilityChange = async () => {
+      if (document.visibilityState === 'visible') {
+        try {
+          await api.syncGameBalance()
+        } catch (_) {}
+        refreshUser()
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange)
+  }, [isAuthenticated, refreshUser])
+
   const openRegister = () => {
     setAuthTab('register')
     setIsAuthOpen(true)
@@ -115,7 +133,10 @@ function AppContent() {
     setPixTransaction(transaction)
     setIsPixOpen(true)
   }
-  const closePix = () => setIsPixOpen(false)
+  const closePix = () => {
+    setIsPixOpen(false)
+    if (isAuthenticated) refreshUser()
+  }
   const handlePixBack = () => {
     closePix()
     openDeposit()
@@ -131,6 +152,7 @@ function AppContent() {
   const openGames = (initialTab = 'all') => {
     setGamesInitialTab(initialTab || 'all')
     setIsGamesOpen(true)
+    if (isAuthenticated) refreshUser()
   }
   const closeGames = () => setIsGamesOpen(false)
   const openBetsHistory = () => setIsBetsHistoryOpen(true)
@@ -229,6 +251,7 @@ function AppContent() {
         onLoginClick={openLogin}
         onMenuClick={openMenu}
         onDepositClick={openDeposit}
+        onRefreshBalance={handleRefreshBalance}
         isMenuOpen={isMenuOpen}
         isLoggedIn={isAuthenticated}
         balance={balance}
@@ -300,6 +323,7 @@ function AppContent() {
         onLoginClick={openLogin}
         onMenuClick={openMenu}
         onDepositClick={openDeposit}
+        onRefreshBalance={handleRefreshBalance}
         onPromotionsClick={openPromotions}
         onInviteClick={openInvite}
         isMenuOpen={isMenuOpen}

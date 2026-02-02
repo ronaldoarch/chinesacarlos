@@ -18,6 +18,7 @@ function Header({
   onLoginClick,
   onMenuClick,
   onDepositClick,
+  onRefreshBalance,
   isMenuOpen,
   isLoggedIn = false,
   balance = 'R$ 0,00'
@@ -41,10 +42,14 @@ function Header({
     }
   }
 
-  const handleRefreshBalance = (event) => {
-    event.stopPropagation()
+  const handleRefreshBalance = async (event) => {
+    event?.stopPropagation()
     setIsRefreshing(true)
-    setTimeout(() => setIsRefreshing(false), 450)
+    try {
+      if (onRefreshBalance) await onRefreshBalance()
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 450)
+    }
   }
 
   return (

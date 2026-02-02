@@ -8,27 +8,39 @@ function BottomNavigation({
   onDepositClick,
   onProfileClick,
   onInviteClick,
+  onHomeClick,
   isLoggedIn = false
 }) {
   const handleRegisterOrDeposit = () => {
-    if (isLoggedIn) {
-      onDepositClick()
-    } else {
-      onRegisterClick()
+    if (onDepositClick) {
+      if (isLoggedIn) onDepositClick()
+      else if (onRegisterClick) onRegisterClick()
     }
   }
 
   const handleProfileClick = () => {
     if (isLoggedIn) {
       if (onProfileClick) onProfileClick()
-    } else {
+    } else if (onLoginClick) {
       onLoginClick()
     }
   }
 
   const handleHomeClick = (e) => {
     e.preventDefault()
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    if (onHomeClick) {
+      onHomeClick()
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
+
+  const handlePromotionsClick = () => {
+    if (onPromotionsClick) onPromotionsClick()
+  }
+
+  const handleInviteClick = () => {
+    if (onInviteClick) onInviteClick()
   }
 
   return (
@@ -50,7 +62,7 @@ function BottomNavigation({
             <small>Início</small>
           </div>
         </button>
-        <button type="button" className="text-center nav-item p-0" id="bannersBtn" onClick={onPromotionsClick}>
+        <button type="button" className="text-center nav-item p-0" id="bannersBtn" onClick={handlePromotionsClick}>
           <div className="nav-icon-container">
             <div className="icon-circle">
               <svg xmlns="http://www.w3.org/2000/svg" width="22" height="20" viewBox="0 0 22 20" fill="none">
@@ -64,7 +76,7 @@ function BottomNavigation({
             <small>Promoção</small>
           </div>
         </button>
-        <button type="button" className="text-center nav-item p-0" id="referralsBtn" onClick={onInviteClick}>
+        <button type="button" className="text-center nav-item p-0" id="referralsBtn" onClick={handleInviteClick}>
           <div className="nav-icon-container">
             <div className="icon-circle">
               <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 23 23" fill="none">

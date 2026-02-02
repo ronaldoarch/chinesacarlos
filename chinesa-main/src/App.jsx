@@ -169,6 +169,59 @@ function AppContent() {
     openProfile()
   }
 
+  const closeAllModals = () => {
+    setIsAuthOpen(false)
+    setIsPromotionsOpen(false)
+    setIsMenuOpen(false)
+    setIsInviteOpen(false)
+    setIsDepositOpen(false)
+    setIsPixOpen(false)
+    setIsDepositHistoryOpen(false)
+    setIsGamesOpen(false)
+    setIsBetsHistoryOpen(false)
+    setIsProfileOpen(false)
+    setIsWithdrawOpen(false)
+    setIsEditProfileOpen(false)
+    setIsChangePasswordOpen(false)
+    setIsVipOpen(false)
+    closePromoPopup()
+  }
+
+  const handleHomeClick = () => {
+    closeAllModals()
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleNavPromotionsClick = () => {
+    closeAllModals()
+    openPromotions()
+  }
+
+  const handleNavInviteClick = () => {
+    closeAllModals()
+    openInvite()
+  }
+
+  const handleNavDepositClick = () => {
+    closeAllModals()
+    openDeposit()
+  }
+
+  const handleNavRegisterClick = () => {
+    closeAllModals()
+    openRegister()
+  }
+
+  const handleNavProfileClick = () => {
+    closeAllModals()
+    openProfile()
+  }
+
+  const handleNavLoginClick = () => {
+    closeAllModals()
+    openLogin()
+  }
+
   return (
     <div className="app">
       <Header
@@ -187,15 +240,13 @@ function AppContent() {
       <Footer />
       <ScrollToTopButton />
       <BottomNavigation
-        onLoginClick={openLogin}
-        onRegisterClick={openRegister}
-        onPromotionsClick={openPromotions}
-        onDepositClick={openDeposit}
-        onInviteClick={openInvite}
-        onProfileClick={() => {
-          closeMenu()
-          openProfile()
-        }}
+        onLoginClick={handleNavLoginClick}
+        onRegisterClick={handleNavRegisterClick}
+        onHomeClick={handleHomeClick}
+        onPromotionsClick={handleNavPromotionsClick}
+        onDepositClick={handleNavDepositClick}
+        onInviteClick={handleNavInviteClick}
+        onProfileClick={handleNavProfileClick}
         isLoggedIn={isAuthenticated}
       />
       <AuthModal

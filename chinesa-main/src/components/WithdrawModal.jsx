@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import api from '../services/api'
 import './WithdrawModal.css'
 
 function WithdrawModal({ isOpen, onClose, onBack, initialTab = 'saque' }) {
@@ -8,10 +9,28 @@ function WithdrawModal({ isOpen, onClose, onBack, initialTab = 'saque' }) {
   const [activeTab, setActiveTab] = useState(initialTab)
   const [showAccountForm, setShowAccountForm] = useState(false)
   const [pixKeyType, setPixKeyType] = useState('CPF')
+  
+  // Função para mapear tipo de chave para exibição
+  const getPixKeyTypeLabel = (type) => {
+    const labels = {
+      'CPF': 'CPF',
+      'CNPJ': 'CNPJ',
+      'PHONE': 'Telefone',
+      'EMAIL': 'Email',
+      'RANDOM': 'Chave aleatória'
+    }
+    return labels[type] || type
+  }
   const [withdrawAmount, setWithdrawAmount] = useState('')
   const [showWithdrawPassword, setShowWithdrawPassword] = useState(false)
   const [showPinValue, setShowPinValue] = useState(false)
   const [pixAccounts, setPixAccounts] = useState([])
+  const [holderName, setHolderName] = useState('')
+  const [pixKey, setPixKey] = useState('')
+  const [loadingAccounts, setLoadingAccounts] = useState(false)
+  const [savingAccount, setSavingAccount] = useState(false)
+  const [accountError, setAccountError] = useState('')
+  const [accountSuccess, setAccountSuccess] = useState('')
   const pinRefs = useRef([])
   const formatWithdrawAmount = (value) => {
     const trimmed = value.trim()
@@ -34,9 +53,126 @@ function WithdrawModal({ isOpen, onClose, onBack, initialTab = 'saque' }) {
       setWithdrawAmount('')
       setShowWithdrawPassword(false)
       setShowPinValue(false)
+      setHolderName('')
+      setPixKey('')
+      setAccountError('')
+      setAccountSuccess('')
       pinRefs.current = []
     }
   }, [isOpen, initialTab])
+
+  // Carregar contas PIX quando a aba 'contas' estiver ativa ou quando o modal abrir
+  useEffect(() => {
+    if (isOpen && activeTab === 'contas') {
+      loadPixAccounts()
+    }
+  }, [isOpen, activeTab])
+
+  const loadPixAccounts = async () => {
+    try {
+      setLoadingAccounts(true)
+      const response = await api.getPixAccounts()
+      if (response.success) {
+        setPixAccounts(response.data || [])
+      }
+    } catch (error) {
+      console.error('Error loading PIX accounts:', error)
+    } finally {
+      setLoadingAccounts(false)
+    }
+  }
+
+  const handleSaveAccount = async () => {
+    // Validação básica
+    if (!holderName.trim()) {
+      setAccountError('Nome do titular é obrigatório')
+      return
+    }
+    if (!pixKey.trim()) {
+      setAccountError('Chave PIX é obrigatória')
+      return
+    }
+
+    // Validação específica por tipo
+    if (pixKeyType === 'CPF') {
+      const digits = pixKey.replace(/\D/g, '')
+      if (digits.length !== 11) {
+        setAccountError('CPF deve ter 11 dígitos')
+        return
+      }
+    } else if (pixKeyType === 'CNPJ') {
+      const digits = pixKey.replace(/\D/g, '')
+      if (digits.length !== 14) {
+        setAccountError('CNPJ deve ter 14 dígitos')
+        return
+      }
+    } else if (pixKeyType === 'EMAIL') {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(pixKey)) {
+        setAccountError('Email inválido')
+        return
+      }
+    } else if (pixKeyType === 'PHONE') {
+      const digits = pixKey.replace(/\D/g, '')
+      if (digits.length !== 11) {
+        setAccountError('Telefone deve ter 11 dígitos (com DDD)')
+        return
+      }
+    } else if (pixKeyType === 'RANDOM') {
+      if (pixKey.length < 32 || pixKey.length > 77) {
+        setAccountError('Chave aleatória deve ter entre 32 e 77 caracteres')
+        return
+      }
+    }
+
+    try {
+      setSavingAccount(true)
+      setAccountError('')
+      setAccountSuccess('')
+
+      const response = await api.createPixAccount({
+        holderName: holderName.trim(),
+        pixKeyType,
+        pixKey: pixKey.trim()
+      })
+
+      if (response.success) {
+        setAccountSuccess('Conta PIX cadastrada com sucesso!')
+        setHolderName('')
+        setPixKey('')
+        setPixKeyType('CPF')
+        // Recarregar contas
+        await loadPixAccounts()
+        // Fechar formulário após 1 segundo
+        setTimeout(() => {
+          setShowAccountForm(false)
+          setAccountSuccess('')
+        }, 1500)
+      }
+    } catch (error) {
+      console.error('Error saving PIX account:', error)
+      setAccountError(error.message || 'Erro ao cadastrar conta PIX')
+    } finally {
+      setSavingAccount(false)
+    }
+  }
+
+  const handleDeleteAccount = async (accountId) => {
+    if (!window.confirm('Tem certeza que deseja remover esta conta PIX?')) {
+      return
+    }
+
+    try {
+      const response = await api.deletePixAccount(accountId)
+      if (response.success) {
+        // Recarregar contas
+        await loadPixAccounts()
+      }
+    } catch (error) {
+      console.error('Error deleting PIX account:', error)
+      alert(error.message || 'Erro ao remover conta PIX')
+    }
+  }
 
   useEffect(() => {
     if (!isOpen) return
@@ -175,7 +311,7 @@ function WithdrawModal({ isOpen, onClose, onBack, initialTab = 'saque' }) {
                       <strong>{pixAccounts.length > 0 ? (pixAccounts[0].name || pixAccounts[0].holderName || 'Conta PIX') : 'Cadastre uma conta na aba Contas'}</strong>
                     </div>
                     <div className="withdraw-summary-row">
-                      <span>Chave {pixAccounts.length > 0 ? (pixAccounts[0].pixKeyType || pixAccounts[0].type || '') : ''}:</span>
+                      <span>Chave {pixAccounts.length > 0 ? getPixKeyTypeLabel(pixAccounts[0].pixKeyType || pixAccounts[0].type) : ''}:</span>
                       <strong>{pixAccounts.length > 0 ? (pixAccounts[0].pixKey || pixAccounts[0].key || '—') : '—'}</strong>
                     </div>
                   </div>
@@ -306,19 +442,29 @@ function WithdrawModal({ isOpen, onClose, onBack, initialTab = 'saque' }) {
 
             {!showAccountForm && (
               <>
-                {pixAccounts.length > 0 ? (
+                {loadingAccounts ? (
+                  <div className="withdraw-empty-card">
+                    <i className="fa-solid fa-spinner fa-spin"></i>
+                    <span>Carregando contas PIX...</span>
+                  </div>
+                ) : pixAccounts.length > 0 ? (
                   pixAccounts.map((account) => (
                     <div key={account.id || account._id} className="withdraw-accounts-card">
                       <div className="withdraw-accounts-card-header">
                         <span className="withdraw-account-name">{account.name || account.holderName || 'Conta PIX'}</span>
                         <span className="withdraw-account-status">{account.active !== false ? 'Ativa' : 'Inativa'}</span>
-                        <button type="button" className="withdraw-account-trash" aria-label="Remover conta">
+                        <button 
+                          type="button" 
+                          className="withdraw-account-trash" 
+                          aria-label="Remover conta"
+                          onClick={() => handleDeleteAccount(account._id || account.id)}
+                        >
                           <i className="fa-solid fa-trash"></i>
                         </button>
                       </div>
                       <div className="withdraw-accounts-card-row">
                         <span>Tipo:</span>
-                        <strong>{account.pixKeyType || account.type || '—'}</strong>
+                        <strong>{getPixKeyTypeLabel(account.pixKeyType || account.type) || '—'}</strong>
                       </div>
                       <div className="withdraw-accounts-card-row">
                         <span>Chave:</span>
@@ -337,11 +483,40 @@ function WithdrawModal({ isOpen, onClose, onBack, initialTab = 'saque' }) {
 
             {showAccountForm && (
               <div className="withdraw-form">
+                {accountError && (
+                  <div style={{ 
+                    padding: '12px', 
+                    backgroundColor: '#ff4444', 
+                    color: 'white', 
+                    borderRadius: '8px', 
+                    marginBottom: '16px',
+                    fontSize: '14px'
+                  }}>
+                    {accountError}
+                  </div>
+                )}
+                {accountSuccess && (
+                  <div style={{ 
+                    padding: '12px', 
+                    backgroundColor: '#4caf50', 
+                    color: 'white', 
+                    borderRadius: '8px', 
+                    marginBottom: '16px',
+                    fontSize: '14px'
+                  }}>
+                    {accountSuccess}
+                  </div>
+                )}
                 <div className="withdraw-field">
                   <label>Nome Completo</label>
                   <div className="withdraw-input">
                     <i className="fa-solid fa-user"></i>
-                    <input type="text" placeholder="Nome do titular da conta" />
+                    <input 
+                      type="text" 
+                      placeholder="Nome do titular da conta" 
+                      value={holderName}
+                      onChange={(e) => setHolderName(e.target.value)}
+                    />
                   </div>
                   <small>Digite o nome exatamente como consta no seu banco.</small>
                 </div>
@@ -349,11 +524,15 @@ function WithdrawModal({ isOpen, onClose, onBack, initialTab = 'saque' }) {
                 <div className="withdraw-field">
                   <label>Tipo de Chave PIX</label>
                   <div className="withdraw-select">
-                    <select value={pixKeyType} onChange={(event) => setPixKeyType(event.target.value)}>
-                      <option>CPF</option>
-                      <option>Email</option>
-                      <option>Telefone</option>
-                      <option>Chave aleatória</option>
+                    <select value={pixKeyType} onChange={(event) => {
+                      setPixKeyType(event.target.value)
+                      setPixKey('') // Limpar chave ao mudar tipo
+                    }}>
+                      <option value="CPF">CPF</option>
+                      <option value="CNPJ">CNPJ</option>
+                      <option value="PHONE">Telefone</option>
+                      <option value="EMAIL">Email</option>
+                      <option value="RANDOM">Chave aleatória</option>
                     </select>
                     <i className="fa-solid fa-chevron-down"></i>
                   </div>
@@ -363,24 +542,47 @@ function WithdrawModal({ isOpen, onClose, onBack, initialTab = 'saque' }) {
                   <label>Chave PIX</label>
                   <div className="withdraw-input">
                     <i className="fa-solid fa-key"></i>
-                    <input type="text" placeholder="Digite sua chave PIX" />
+                    <input 
+                      type="text" 
+                      placeholder="Digite sua chave PIX" 
+                      value={pixKey}
+                      onChange={(e) => setPixKey(e.target.value)}
+                    />
                   </div>
                   <small>
                     {pixKeyType === 'CPF' && 'Digite apenas os números do CPF (11 dígitos).'}
-                    {pixKeyType === 'Email' && 'Digite o e-mail completo (deve ser válido).'}
-                    {pixKeyType === 'Telefone' && 'Digite o número com DDD, sem espaços ou símbolos (11 dígitos).'}
-                    {pixKeyType === 'Chave aleatória' && 'Digite a chave aleatória completa.'}
+                    {pixKeyType === 'CNPJ' && 'Digite apenas os números do CNPJ (14 dígitos).'}
+                    {pixKeyType === 'EMAIL' && 'Digite o e-mail completo (deve ser válido).'}
+                    {pixKeyType === 'PHONE' && 'Digite o número com DDD, sem espaços ou símbolos (11 dígitos).'}
+                    {pixKeyType === 'RANDOM' && 'Digite a chave aleatória completa.'}
                   </small>
                 </div>
 
                 <div className="withdraw-form-actions">
-                  <button type="button" className="withdraw-back-btn" onClick={() => setShowAccountForm(false)}>
+                  <button 
+                    type="button" 
+                    className="withdraw-back-btn" 
+                    onClick={() => {
+                      setShowAccountForm(false)
+                      setHolderName('')
+                      setPixKey('')
+                      setPixKeyType('CPF')
+                      setAccountError('')
+                      setAccountSuccess('')
+                    }}
+                    disabled={savingAccount}
+                  >
                     <i className="fa-solid fa-arrow-left"></i>
                     <span>Voltar</span>
                   </button>
-                  <button type="button" className="withdraw-save-btn">
+                  <button 
+                    type="button" 
+                    className="withdraw-save-btn"
+                    onClick={handleSaveAccount}
+                    disabled={savingAccount}
+                  >
                     <i className="fa-solid fa-floppy-disk"></i>
-                    <span>Salvar Conta PIX</span>
+                    <span>{savingAccount ? 'Salvando...' : 'Salvar Conta PIX'}</span>
                   </button>
                 </div>
               </div>

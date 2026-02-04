@@ -549,6 +549,26 @@ class ApiService {
       body: JSON.stringify(data)
     })
   }
+
+  // PIX Account endpoints
+  async getPixAccounts() {
+    return this.request('/pix-accounts', {
+      method: 'GET'
+    })
+  }
+
+  async createPixAccount(accountData) {
+    return this.request('/pix-accounts', {
+      method: 'POST',
+      body: JSON.stringify(accountData)
+    })
+  }
+
+  async deletePixAccount(id) {
+    return this.request(`/pix-accounts/${id}`, {
+      method: 'DELETE'
+    })
+  }
 }
 
 export default new ApiService()

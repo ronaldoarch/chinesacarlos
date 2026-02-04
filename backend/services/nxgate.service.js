@@ -200,7 +200,14 @@ class NxgateService {
       if (isHtml) {
         console.error('⚠️  NXGATE retornou HTML ao invés de JSON no saque')
         console.error('Content-Type:', contentType)
-        console.error('Response preview:', typeof responseData === 'string' ? responseData.substring(0, 300) : JSON.stringify(responseData).substring(0, 300))
+        console.error('Status:', response.status)
+        console.error('Response preview:', typeof responseData === 'string' ? responseData.substring(0, 500) : JSON.stringify(responseData).substring(0, 500))
+        
+        // Verificar se é erro 404 específico
+        if (response.status === 404 || (typeof responseData === 'string' && responseData.includes('Cannot POST'))) {
+          throw new Error('Endpoint /pix/sacar não encontrado (404). Verifique se o endpoint está disponível na sua conta NXGATE ou se precisa de configuração adicional no painel administrativo.')
+        }
+        
         throw new Error('API retornou HTML ao invés de JSON. O endpoint /pix/sacar pode não existir ou estar bloqueado pelo Cloudflare.')
       }
       
@@ -228,19 +235,19 @@ class NxgateService {
 
       // Mensagem de erro mais específica baseada no status
       let errorMessage = 'Erro ao processar saque'
-      if (error.response?.status === 404) {
+      if (error.response?.status === 404 || error.message?.includes('404')) {
         // Verificar se a resposta é HTML (Cloudflare)
-        const responseData = error.response?.data
+        const responseData = error.response?.data || error.message
         const isHtml = typeof responseData === 'string' && (
           responseData.includes('Cannot POST') ||
           responseData.includes('Cloudflare') ||
           responseData.includes('<html')
         )
         
-        if (isHtml) {
-          errorMessage = 'Endpoint de saque não encontrado ou bloqueado. O endpoint /pix/sacar pode não estar disponível na API do NXGATE. Verifique a documentação do gateway ou entre em contato com o suporte.'
+        if (isHtml || error.message?.includes('Cannot POST')) {
+          errorMessage = 'O endpoint de saque /pix/sacar não está disponível na API do NXGATE. Verifique: 1) Se sua conta tem permissão para saques, 2) Se o endpoint está habilitado no painel do NXGATE, 3) Entre em contato com o suporte do NXGATE para confirmar a disponibilidade do endpoint.'
         } else {
-          errorMessage = 'Endpoint de saque não encontrado. Verifique a configuração da API do gateway no admin.'
+          errorMessage = 'Endpoint de saque não encontrado (404). Verifique a configuração da API do gateway no admin.'
         }
       } else if (error.response?.status === 403) {
         errorMessage = 'Acesso negado. Verifique se a API Key está correta e tem permissão para saques.'

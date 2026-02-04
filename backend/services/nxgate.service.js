@@ -26,18 +26,39 @@ class NxgateService {
       
       if (config && config.isActive) {
         this.apiKey = config.apiKey || this.apiKey
-        this.baseURL = config.apiUrl || this.baseURL
+        // Usar URL corrigida do banco ou padrão correto
+        const dbUrl = config.apiUrl || this.baseURL
+        // Se a URL do banco ainda estiver incorreta, forçar correção
+        if (dbUrl === 'https://api.nxgate.com.br' || dbUrl === 'https://api.nxgate.com.br/') {
+          this.baseURL = 'https://nxgate.com.br/api'
+          // Atualizar no banco também
+          config.apiUrl = 'https://nxgate.com.br/api'
+          await config.save()
+        } else {
+          this.baseURL = dbUrl
+        }
         this.webhookBaseUrl = config.webhookBaseUrl || this.webhookBaseUrl
+      } else {
+        // Se config não estiver ativa, garantir URL correta
+        if (this.baseURL === 'https://api.nxgate.com.br' || this.baseURL === 'https://api.nxgate.com.br/') {
+          this.baseURL = 'https://nxgate.com.br/api'
+        }
       }
       
-      // Garantir que sempre use a URL correta, mesmo se config não estiver ativa
+      // Garantir que sempre use a URL correta como última verificação
       if (this.baseURL === 'https://api.nxgate.com.br' || this.baseURL === 'https://api.nxgate.com.br/') {
-        console.log('⚠️  Corrigindo baseURL para URL correta do NXGATE')
+        console.log('⚠️  Forçando correção de baseURL para URL correta do NXGATE')
         this.baseURL = 'https://nxgate.com.br/api'
       }
+      
+      // Log para debug
+      console.log('📡 NXGATE baseURL configurado:', this.baseURL)
     } catch (error) {
       console.error('Error loading gateway config:', error)
       // Use defaults from env (já está correto no const)
+      if (this.baseURL === 'https://api.nxgate.com.br' || this.baseURL === 'https://api.nxgate.com.br/') {
+        this.baseURL = 'https://nxgate.com.br/api'
+      }
     }
   }
 
@@ -53,6 +74,13 @@ class NxgateService {
   async generatePix(data) {
     try {
       await this.getConfig()
+      
+      // Garantir URL correta antes de fazer a requisição
+      if (this.baseURL === 'https://api.nxgate.com.br' || this.baseURL === 'https://api.nxgate.com.br/') {
+        console.log('⚠️  Corrigindo baseURL para depósito PIX')
+        this.baseURL = 'https://nxgate.com.br/api'
+      }
+      
       const payload = {
         nome_pagador: data.nome_pagador,
         documento_pagador: data.documento_pagador,
@@ -61,7 +89,14 @@ class NxgateService {
         webhook: data.webhook || `${this.webhookBaseUrl}/api/webhooks/pix`
       }
 
-      const response = await axios.post(`${this.baseURL}/pix/gerar`, payload, {
+      const endpoint = `${this.baseURL}/pix/gerar`
+      console.log('NXGATE Generate PIX Request:', {
+        url: endpoint,
+        baseURL: this.baseURL,
+        payload: { ...payload, api_key: '***' }
+      })
+
+      const response = await axios.post(endpoint, payload, {
         headers: {
           'Content-Type': 'application/json',
           'accept': 'application/json'

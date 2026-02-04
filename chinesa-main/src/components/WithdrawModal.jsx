@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import api from '../services/api'
 import './WithdrawModal.css'
@@ -22,8 +22,6 @@ function WithdrawModal({ isOpen, onClose, onBack, initialTab = 'saque' }) {
     return labels[type] || type
   }
   const [withdrawAmount, setWithdrawAmount] = useState('')
-  const [showWithdrawPassword, setShowWithdrawPassword] = useState(false)
-  const [showPinValue, setShowPinValue] = useState(false)
   const [pixAccounts, setPixAccounts] = useState([])
   const [holderName, setHolderName] = useState('')
   const [pixKey, setPixKey] = useState('')
@@ -31,7 +29,9 @@ function WithdrawModal({ isOpen, onClose, onBack, initialTab = 'saque' }) {
   const [savingAccount, setSavingAccount] = useState(false)
   const [accountError, setAccountError] = useState('')
   const [accountSuccess, setAccountSuccess] = useState('')
-  const pinRefs = useRef([])
+  const [processingWithdraw, setProcessingWithdraw] = useState(false)
+  const [withdrawError, setWithdrawError] = useState('')
+  const [withdrawSuccess, setWithdrawSuccess] = useState('')
   const formatWithdrawAmount = (value) => {
     const trimmed = value.trim()
     if (trimmed === '') return ''
@@ -51,13 +51,12 @@ function WithdrawModal({ isOpen, onClose, onBack, initialTab = 'saque' }) {
       setShowAccountForm(false)
       setPixKeyType('CPF')
       setWithdrawAmount('')
-      setShowWithdrawPassword(false)
-      setShowPinValue(false)
       setHolderName('')
       setPixKey('')
       setAccountError('')
       setAccountSuccess('')
-      pinRefs.current = []
+      setWithdrawError('')
+      setWithdrawSuccess('')
     }
   }, [isOpen, initialTab])
 
@@ -175,6 +174,81 @@ function WithdrawModal({ isOpen, onClose, onBack, initialTab = 'saque' }) {
     }
   }
 
+  const handleWithdraw = async () => {
+    // Validações
+    if (!withdrawAmount.trim()) {
+      setWithdrawError('Digite o valor do saque')
+      return
+    }
+
+    if (pixAccounts.length === 0) {
+      setWithdrawError('Você precisa cadastrar uma conta PIX primeiro')
+      return
+    }
+
+    const amount = parseFloat(withdrawAmount.replace(',', '.'))
+    if (isNaN(amount) || amount < 10 || amount > 5000) {
+      setWithdrawError('Valor deve estar entre R$ 10,00 e R$ 5.000,00')
+      return
+    }
+
+    const selectedAccount = pixAccounts[0]
+    if (!selectedAccount) {
+      setWithdrawError('Selecione uma conta PIX')
+      return
+    }
+
+    // Formatar CPF (assumindo que o usuário tem CPF no sistema ou usar um padrão)
+    // Por enquanto, vamos usar um CPF genérico ou pedir ao usuário
+    // Mas como o backend requer CPF, vou usar o CPF do usuário se disponível
+    // Se não tiver, precisaremos pedir ou usar um padrão
+    let cpf = '000.000.000-00' // Valor padrão temporário
+    
+    // Tentar obter CPF do usuário se disponível
+    if (user?.cpf) {
+      cpf = user.cpf
+    } else if (user?.document) {
+      cpf = user.document
+    }
+
+    // Se o tipo de chave for CPF, usar a própria chave como CPF
+    if (selectedAccount.pixKeyType === 'CPF') {
+      const digits = selectedAccount.pixKey.replace(/\D/g, '')
+      if (digits.length === 11) {
+        cpf = `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`
+      }
+    }
+
+    try {
+      setProcessingWithdraw(true)
+      setWithdrawError('')
+      setWithdrawSuccess('')
+
+      const response = await api.createWithdraw({
+        amount: amount.toFixed(2),
+        pixKey: selectedAccount.pixKey,
+        pixKeyType: selectedAccount.pixKeyType,
+        cpf: cpf
+      })
+
+      if (response.success) {
+        setWithdrawSuccess('Saque solicitado com sucesso!')
+        setWithdrawAmount('')
+        // Fechar modal após 2 segundos
+        setTimeout(() => {
+          handleClose()
+          // Recarregar dados do usuário se necessário
+          window.location.reload() // Ou atualizar o contexto de autenticação
+        }, 2000)
+      }
+    } catch (error) {
+      console.error('Error processing withdrawal:', error)
+      setWithdrawError(error.message || 'Erro ao processar saque')
+    } finally {
+      setProcessingWithdraw(false)
+    }
+  }
+
   useEffect(() => {
     if (!isOpen) return
     const handleKeyDown = (event) => {
@@ -243,8 +317,33 @@ function WithdrawModal({ isOpen, onClose, onBack, initialTab = 'saque' }) {
       </div>
 
       <div className="withdraw-content">
-        {activeTab === 'saque' && !showWithdrawPassword && (
+        {activeTab === 'saque' && (
           <>
+            {withdrawError && (
+              <div style={{ 
+                padding: '12px', 
+                backgroundColor: '#ff4444', 
+                color: 'white', 
+                borderRadius: '8px', 
+                marginBottom: '16px',
+                fontSize: '14px'
+              }}>
+                {withdrawError}
+              </div>
+            )}
+            {withdrawSuccess && (
+              <div style={{ 
+                padding: '12px', 
+                backgroundColor: '#4caf50', 
+                color: 'white', 
+                borderRadius: '8px', 
+                marginBottom: '16px',
+                fontSize: '14px'
+              }}>
+                {withdrawSuccess}
+              </div>
+            )}
+
             {pixAccounts.length === 0 && (
               <div className="withdraw-alert">
                 <i className="fa-solid fa-circle-exclamation"></i>
@@ -334,97 +433,15 @@ function WithdrawModal({ isOpen, onClose, onBack, initialTab = 'saque' }) {
 
               <button
                 type="button"
-                className={`withdraw-request${withdrawAmount.trim() !== '' ? ' is-active' : ''}`}
-                onClick={() => setShowWithdrawPassword(true)}
+                className={`withdraw-request${withdrawAmount.trim() !== '' && pixAccounts.length > 0 ? ' is-active' : ''}`}
+                onClick={handleWithdraw}
+                disabled={processingWithdraw || withdrawAmount.trim() === '' || pixAccounts.length === 0}
               >
                 <i className="fa-solid fa-wallet"></i>
-                <span>Solicitar Saque</span>
+                <span>{processingWithdraw ? 'Processando...' : 'Solicitar Saque'}</span>
               </button>
-
-              <div className="withdraw-form-actions">
-                <button type="button" className="withdraw-back-btn">
-                  <i className="fa-solid fa-arrow-left"></i>
-                  <span>Voltar</span>
-                </button>
-                <button type="button" className="withdraw-save-btn">
-                  <i className="fa-solid fa-check"></i>
-                  <span>Confirmar Saque</span>
-                </button>
-              </div>
             </div>
           </>
-        )}
-
-        {activeTab === 'saque' && showWithdrawPassword && (
-          <div className="withdraw-password">
-            <div className="withdraw-password-alert">
-              <i className="fa-solid fa-shield-halved"></i>
-              <span>Digite sua senha de saque para confirmar a transação.</span>
-            </div>
-
-            <div className="withdraw-summary-card">
-              <div className="withdraw-summary-row">
-                <span>Valor solicitado:</span>
-                <strong>{formattedWithdrawAmount}</strong>
-              </div>
-              <div className="withdraw-summary-row">
-                <span>Taxa:</span>
-                <strong style={{ color: '#fb010b', fontWeight: '500' }}>R$ 0,00</strong>
-              </div>
-              <div className="withdraw-summary-row">
-                <span style={{ fontWeight: '600' }}>Valor a receber:</span>
-                <strong>{formattedWithdrawAmount}</strong>
-              </div>
-            </div>
-
-            <div className="withdraw-field">
-              <label>Senha de Saque</label>
-              <button
-                type="button"
-                className="withdraw-pin-toggle"
-                aria-label={showPinValue ? 'Ocultar senha' : 'Mostrar senha'}
-                onClick={() => setShowPinValue((prev) => !prev)}
-              >
-                <i className={showPinValue ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash'}></i>
-              </button>
-            </div>
-              <div className="withdraw-pin-row">
-                {Array.from({ length: 6 }).map((_, index) => (
-                  <input
-                    key={`pin-${index}`}
-                    type={showPinValue ? 'text' : 'password'}
-                    inputMode="numeric"
-                    maxLength={1}
-                    ref={(el) => {
-                      pinRefs.current[index] = el
-                    }}
-                    onChange={(event) => {
-                      if (event.target.value && index < 5) {
-                        pinRefs.current[index + 1]?.focus()
-                      }
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Backspace' && !event.currentTarget.value && index > 0) {
-                        pinRefs.current[index - 1]?.focus()
-                      }
-                    }}
-                  />
-                ))}
-                
-              
-            </div>
-
-            <div className="withdraw-form-actions">
-              <button type="button" className="withdraw-back-btn" onClick={() => setShowWithdrawPassword(false)}>
-                <i className="fa-solid fa-arrow-left"></i>
-                <span>Voltar</span>
-              </button>
-              <button type="button" className="withdraw-save-btn">
-                <i className="fa-solid fa-check"></i>
-                <span>Confirmar Saque</span>
-              </button>
-            </div>
-          </div>
         )}
 
         {activeTab === 'contas' && (

@@ -197,7 +197,7 @@ router.post(
         })
       }
 
-      const { amount, pixKey, pixKeyType, cpf } = req.body
+      const { amount, pixKey, pixKeyType, cpf, holderName } = req.body
       const user = req.user
 
       // Bônus não é sacável - apenas para jogar
@@ -238,6 +238,7 @@ router.post(
         chave_pix: pixKey,
         tipo_chave: pixKeyType,
         documento: cpf.replace(/\D/g, ''),
+        nome_recebedor: holderName || user.username || 'Usuário',
         webhook: transaction.webhookUrl
       })
 

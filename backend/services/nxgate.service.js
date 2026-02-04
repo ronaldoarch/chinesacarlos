@@ -74,6 +74,7 @@ class NxgateService {
    * @param {string} data.chave_pix - Chave PIX do recebedor
    * @param {string} data.tipo_chave - Tipo da chave (CPF, CNPJ, PHONE, EMAIL, RANDOM)
    * @param {string} data.documento - CPF do recebedor
+   * @param {string} data.nome_recebedor - Nome do recebedor (opcional)
    * @param {string} data.webhook - URL do webhook
    * @returns {Promise<Object>} Resposta da API
    */
@@ -86,6 +87,7 @@ class NxgateService {
         chave_pix: data.chave_pix,
         tipo_chave: data.tipo_chave,
         documento: data.documento,
+        ...(data.nome_recebedor && { nome_recebedor: data.nome_recebedor }),
         webhook: data.webhook || `${this.webhookBaseUrl}/api/webhooks/pix-withdraw`
       }
 

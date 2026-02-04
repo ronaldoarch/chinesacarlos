@@ -228,7 +228,8 @@ function WithdrawModal({ isOpen, onClose, onBack, initialTab = 'saque' }) {
         amount: amount.toFixed(2),
         pixKey: selectedAccount.pixKey,
         pixKeyType: selectedAccount.pixKeyType,
-        cpf: cpf
+        cpf: cpf,
+        holderName: selectedAccount.holderName || user?.username || 'Usuário'
       })
 
       if (response.success) {

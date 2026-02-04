@@ -28,6 +28,7 @@ import ChangePasswordModal from './components/ChangePasswordModal'
 import VipModal from './components/VipModal'
 import PopupPromoModal from './components/PopupPromoModal'
 import GameFrame from './components/GameFrame'
+import Notification from './components/Notification'
 import './styles/App.css'
 
 function AppContent() {
@@ -54,6 +55,7 @@ function AppContent() {
   const [pixTransaction, setPixTransaction] = React.useState(null)
   const [promoPopup, setPromoPopup] = React.useState(null)
   const [gameLaunchUrl, setGameLaunchUrl] = React.useState(null)
+  const [notification, setNotification] = React.useState({ message: '', type: 'success', isOpen: false })
 
   React.useEffect(() => {
     api.getActivePopup()
@@ -162,6 +164,19 @@ function AppContent() {
   const closePix = () => {
     setIsPixOpen(false)
     if (isAuthenticated) refreshUser()
+  }
+  
+  const showNotification = (message, type = 'success') => {
+    setNotification({ message, type, isOpen: true })
+  }
+  
+  const closeNotification = () => {
+    setNotification(prev => ({ ...prev, isOpen: false }))
+  }
+  
+  const redirectToHome = () => {
+    closeAllModals()
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
   const handlePixBack = () => {
     closePix()
@@ -336,6 +351,15 @@ function AppContent() {
         onBack={handlePixBack}
         amountValue={pixAmount}
         transaction={pixTransaction}
+        onPaymentConfirmed={(transaction) => {
+          closePix()
+          refreshUser()
+          const amount = transaction.amount || pixAmount
+          showNotification(`Depósito de ${formatBalance(amount)} confirmado com sucesso!`, 'success')
+          setTimeout(() => {
+            redirectToHome()
+          }, 2000)
+        }}
       />
       <DepositHistoryModal
         isOpen={isDepositHistoryOpen}
@@ -415,6 +439,14 @@ function AppContent() {
         initialTab={withdrawTab}
         onClose={closeWithdraw}
         onBack={handleWithdrawBack}
+        onWithdrawSuccess={(amount) => {
+          closeWithdraw()
+          refreshUser()
+          showNotification(`Saque de ${formatBalance(amount)} solicitado com sucesso!`, 'success')
+          setTimeout(() => {
+            redirectToHome()
+          }, 2000)
+        }}
       />
       <EditProfileModal
         isOpen={isEditProfileOpen}
@@ -430,6 +462,12 @@ function AppContent() {
       <InviteModal isOpen={isInviteOpen} onClose={closeInvite} />
       <PopupPromoModal popup={promoPopup} onClose={closePromoPopup} />
       <GameFrame launchUrl={gameLaunchUrl} onClose={handleCloseGame} />
+      <Notification
+        message={notification.message}
+        type={notification.type}
+        isOpen={notification.isOpen}
+        onClose={closeNotification}
+      />
     </div>
   )
 }

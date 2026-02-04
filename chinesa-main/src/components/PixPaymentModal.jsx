@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import QRCode from 'qrcode'
+import api from '../services/api'
 import './PixPaymentModal.css'
 
-function PixPaymentModal({ isOpen, onClose, onBack, amountValue = 0, transaction = null }) {
+function PixPaymentModal({ isOpen, onClose, onBack, amountValue = 0, transaction = null, onPaymentConfirmed }) {
   const [isClosing, setIsClosing] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
   const [remainingSeconds, setRemainingSeconds] = useState(0)
@@ -80,6 +81,44 @@ function PixPaymentModal({ isOpen, onClose, onBack, amountValue = 0, transaction
     const timer = setTimeout(() => setIsCopied(false), 2500)
     return () => clearTimeout(timer)
   }, [isCopied])
+
+  // Polling para verificar se o pagamento foi confirmado
+  useEffect(() => {
+    if (!isOpen || !transaction) return
+    
+    const transactionId = transaction.id || transaction._id
+    if (!transactionId) return
+    
+    let hasConfirmed = false
+    
+    const checkPaymentStatus = async () => {
+      if (hasConfirmed) return
+      
+      try {
+        const response = await api.getTransaction(transactionId)
+        if (response.success && response.data?.transaction) {
+          const tx = response.data.transaction
+          if (tx.status === 'paid' && onPaymentConfirmed && !hasConfirmed) {
+            hasConfirmed = true
+            onPaymentConfirmed(tx)
+          }
+        }
+      } catch (error) {
+        console.error('Error checking payment status:', error)
+      }
+    }
+
+    // Verificar a cada 3 segundos
+    const interval = setInterval(checkPaymentStatus, 3000)
+    
+    // Verificar imediatamente também
+    checkPaymentStatus()
+    
+    return () => {
+      clearInterval(interval)
+      hasConfirmed = false
+    }
+  }, [isOpen, transaction, onPaymentConfirmed])
 
   const handleClose = () => {
     setIsClosing(true)

@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext'
 import api from '../services/api'
 import './WithdrawModal.css'
 
-function WithdrawModal({ isOpen, onClose, onBack, initialTab = 'saque' }) {
+function WithdrawModal({ isOpen, onClose, onBack, initialTab = 'saque', onWithdrawSuccess }) {
   const { user } = useAuth()
   const [isClosing, setIsClosing] = useState(false)
   const [activeTab, setActiveTab] = useState(initialTab)
@@ -251,12 +251,17 @@ function WithdrawModal({ isOpen, onClose, onBack, initialTab = 'saque' }) {
       if (response.success) {
         setWithdrawSuccess('Saque solicitado com sucesso!')
         setWithdrawAmount('')
-        // Fechar modal após 2 segundos
-        setTimeout(() => {
-          handleClose()
-          // Recarregar dados do usuário se necessário
-          window.location.reload() // Ou atualizar o contexto de autenticação
-        }, 2000)
+        // Chamar callback de sucesso se fornecido
+        if (onWithdrawSuccess) {
+          setTimeout(() => {
+            onWithdrawSuccess(amount)
+          }, 500)
+        } else {
+          // Fallback: fechar modal após 2 segundos
+          setTimeout(() => {
+            handleClose()
+          }, 2000)
+        }
       }
     } catch (error) {
       console.error('Error processing withdrawal:', error)

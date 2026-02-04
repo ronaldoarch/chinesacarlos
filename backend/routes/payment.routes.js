@@ -174,8 +174,8 @@ router.post(
   protect,
   [
     body('amount')
-      .isFloat({ min: 10 })
-      .withMessage('Valor mínimo de saque é R$ 10,00'),
+      .isFloat({ min: 1 })
+      .withMessage('Valor inválido'),
     body('pixKey')
       .notEmpty()
       .withMessage('Chave PIX é obrigatória'),
@@ -199,6 +199,18 @@ router.post(
 
       const { amount, pixKey, pixKeyType, cpf, holderName } = req.body
       const user = req.user
+
+      // Validar limites de saque configurados
+      const withdrawConfig = await BonusConfig.getConfig()
+      const minWithdraw = withdrawConfig.minWithdraw ?? 20
+      const maxWithdraw = withdrawConfig.maxWithdraw ?? 5000
+      const amountNum = parseFloat(amount)
+      if (amountNum < minWithdraw || amountNum > maxWithdraw) {
+        return res.status(400).json({
+          success: false,
+          message: `Valor deve estar entre R$ ${minWithdraw.toFixed(2)} e R$ ${maxWithdraw.toFixed(2)}`
+        })
+      }
 
       // Bônus não é sacável - apenas para jogar
       const withdrawable = Math.max(0, (user.balance || 0) - (user.bonusBalance || 0))

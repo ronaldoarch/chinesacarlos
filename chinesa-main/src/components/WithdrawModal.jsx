@@ -32,6 +32,8 @@ function WithdrawModal({ isOpen, onClose, onBack, initialTab = 'saque' }) {
   const [processingWithdraw, setProcessingWithdraw] = useState(false)
   const [withdrawError, setWithdrawError] = useState('')
   const [withdrawSuccess, setWithdrawSuccess] = useState('')
+  const [minWithdraw, setMinWithdraw] = useState(20)
+  const [maxWithdraw, setMaxWithdraw] = useState(5000)
   const formatWithdrawAmount = (value) => {
     const trimmed = value.trim()
     if (trimmed === '') return ''
@@ -74,13 +76,27 @@ function WithdrawModal({ isOpen, onClose, onBack, initialTab = 'saque' }) {
     }
   }
 
-  // Carregar contas PIX sempre que o modal abrir ou quando mudar de aba
+  // Carregar contas PIX e limites sempre que o modal abrir ou quando mudar de aba
   useEffect(() => {
     if (isOpen) {
       loadPixAccounts()
+      loadWithdrawLimits()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, activeTab])
+
+  const loadWithdrawLimits = async () => {
+    try {
+      const response = await api.getBonusConfig()
+      if (response.success && response.data) {
+        const config = response.data
+        if (config.minWithdraw != null) setMinWithdraw(Number(config.minWithdraw) || 20)
+        if (config.maxWithdraw != null) setMaxWithdraw(Number(config.maxWithdraw) || 5000)
+      }
+    } catch (error) {
+      console.error('Error loading withdraw limits:', error)
+    }
+  }
 
   const handleSaveAccount = async () => {
     // Validação básica
@@ -187,8 +203,8 @@ function WithdrawModal({ isOpen, onClose, onBack, initialTab = 'saque' }) {
     }
 
     const amount = parseFloat(withdrawAmount.replace(',', '.'))
-    if (isNaN(amount) || amount < 10 || amount > 5000) {
-      setWithdrawError('Valor deve estar entre R$ 10,00 e R$ 5.000,00')
+    if (isNaN(amount) || amount < minWithdraw || amount > maxWithdraw) {
+      setWithdrawError(`Valor deve estar entre R$ ${minWithdraw.toFixed(2)} e R$ ${maxWithdraw.toFixed(2)}`)
       return
     }
 
@@ -392,7 +408,7 @@ function WithdrawModal({ isOpen, onClose, onBack, initialTab = 'saque' }) {
                     }}
                   />
                 </div>
-                <small>Min: R$ 10,00 - Max: R$ 5.000,00</small>
+                <small>Min: R$ {minWithdraw.toFixed(2)} - Max: R$ {maxWithdraw.toFixed(2)}</small>
               </div>
 
               {withdrawAmount.trim() !== '' && (

@@ -1,7 +1,7 @@
 import axios from 'axios'
 import GatewayConfig from '../models/GatewayConfig.model.js'
 
-const NXGATE_API_URL = 'https://nxgate.com.br/api'
+const NXGATE_API_URL = 'https://api.nxgate.com.br'
 const NXGATE_API_KEY = process.env.NXGATE_API_KEY || 'd6fd1a0ed8daf4b33754d9f7d494d697'
 const WEBHOOK_BASE_URL = process.env.WEBHOOK_BASE_URL || 'http://localhost:5000'
 
@@ -16,39 +16,24 @@ class NxgateService {
     try {
       const config = await GatewayConfig.getConfig()
       
-      // Correção automática: atualizar URL antiga para nova (mesmo se não estiver ativa)
-      if (config && (config.apiUrl === 'https://api.nxgate.com.br' || config.apiUrl === 'https://api.nxgate.com.br/')) {
-        console.log('⚠️  Corrigindo URL antiga do NXGATE no banco de dados...')
-        config.apiUrl = 'https://nxgate.com.br/api'
+      // Correção automática: atualizar URL incorreta (nxgate.com.br/api) para correta (api.nxgate.com.br)
+      if (config && (config.apiUrl === 'https://nxgate.com.br/api' || config.apiUrl === 'https://nxgate.com.br/api/')) {
+        console.log('⚠️  Corrigindo URL incorreta do NXGATE no banco de dados...')
+        config.apiUrl = 'https://api.nxgate.com.br'
         await config.save()
         console.log('✅ URL atualizada para:', config.apiUrl)
       }
       
       if (config && config.isActive) {
         this.apiKey = config.apiKey || this.apiKey
-        // Usar URL corrigida do banco ou padrão correto
-        const dbUrl = config.apiUrl || this.baseURL
-        // Se a URL do banco ainda estiver incorreta, forçar correção
-        if (dbUrl === 'https://api.nxgate.com.br' || dbUrl === 'https://api.nxgate.com.br/') {
-          this.baseURL = 'https://nxgate.com.br/api'
-          // Atualizar no banco também
-          config.apiUrl = 'https://nxgate.com.br/api'
-          await config.save()
-        } else {
-          this.baseURL = dbUrl
-        }
+        this.baseURL = config.apiUrl || this.baseURL
         this.webhookBaseUrl = config.webhookBaseUrl || this.webhookBaseUrl
-      } else {
-        // Se config não estiver ativa, garantir URL correta
-        if (this.baseURL === 'https://api.nxgate.com.br' || this.baseURL === 'https://api.nxgate.com.br/') {
-          this.baseURL = 'https://nxgate.com.br/api'
-        }
       }
       
-      // Garantir que sempre use a URL correta como última verificação
-      if (this.baseURL === 'https://api.nxgate.com.br' || this.baseURL === 'https://api.nxgate.com.br/') {
-        console.log('⚠️  Forçando correção de baseURL para URL correta do NXGATE')
-        this.baseURL = 'https://nxgate.com.br/api'
+      // Garantir que sempre use a URL correta
+      if (this.baseURL === 'https://nxgate.com.br/api' || this.baseURL === 'https://nxgate.com.br/api/') {
+        console.log('⚠️  Corrigindo baseURL para URL correta do NXGATE')
+        this.baseURL = 'https://api.nxgate.com.br'
       }
       
       // Log para debug
@@ -56,9 +41,6 @@ class NxgateService {
     } catch (error) {
       console.error('Error loading gateway config:', error)
       // Use defaults from env (já está correto no const)
-      if (this.baseURL === 'https://api.nxgate.com.br' || this.baseURL === 'https://api.nxgate.com.br/') {
-        this.baseURL = 'https://nxgate.com.br/api'
-      }
     }
   }
 
@@ -76,9 +58,9 @@ class NxgateService {
       await this.getConfig()
       
       // Garantir URL correta antes de fazer a requisição
-      if (this.baseURL === 'https://api.nxgate.com.br' || this.baseURL === 'https://api.nxgate.com.br/') {
+      if (this.baseURL === 'https://nxgate.com.br/api' || this.baseURL === 'https://nxgate.com.br/api/') {
         console.log('⚠️  Corrigindo baseURL para depósito PIX')
-        this.baseURL = 'https://nxgate.com.br/api'
+        this.baseURL = 'https://api.nxgate.com.br'
       }
       
       const payload = {
@@ -99,9 +81,39 @@ class NxgateService {
       const response = await axios.post(endpoint, payload, {
         headers: {
           'Content-Type': 'application/json',
-          'accept': 'application/json'
+          'Accept': 'application/json'
+        },
+        timeout: 30000,
+        maxRedirects: 5, // Seguir redirects automaticamente
+        validateStatus: function (status) {
+          return status < 500 // Aceitar tudo exceto erros 5xx
         }
       })
+      
+      // Verificar se a resposta é HTML (Cloudflare challenge ou redirect)
+      const contentType = response.headers['content-type'] || ''
+      const responseData = response.data
+      const isHtml = contentType.includes('text/html') || 
+                     (typeof responseData === 'string' && (
+                       responseData.includes('Redirecting') || 
+                       responseData.includes('Cloudflare') ||
+                       responseData.includes('<html') ||
+                       responseData.includes('<!DOCTYPE')
+                     ))
+      
+      if (isHtml) {
+        console.error('⚠️  NXGATE retornou HTML ao invés de JSON')
+        console.error('Content-Type:', contentType)
+        console.error('Response preview:', typeof responseData === 'string' ? responseData.substring(0, 300) : JSON.stringify(responseData).substring(0, 300))
+        throw new Error('API retornou HTML ao invés de JSON. A URL pode estar incorreta ou o Cloudflare está bloqueando a requisição.')
+      }
+      
+      // Verificar se é JSON válido
+      if (typeof responseData === 'string' && !responseData.trim().startsWith('{') && !responseData.trim().startsWith('[')) {
+        console.error('⚠️  Resposta não é JSON válido')
+        console.error('Response:', responseData.substring(0, 500))
+        throw new Error('API retornou resposta inválida. Verifique a configuração do gateway.')
+      }
 
       return {
         success: true,
@@ -164,9 +176,10 @@ class NxgateService {
       const response = await axios.post(endpoint, payload, {
         headers: {
           'Content-Type': 'application/json',
-          'accept': 'application/json'
+          'Accept': 'application/json'
         },
-        timeout: 30000
+        timeout: 30000,
+        maxRedirects: 5 // Seguir redirects automaticamente
       })
 
       return {

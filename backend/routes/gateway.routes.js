@@ -44,7 +44,7 @@ router.put('/config', protect, isAdmin, async (req, res) => {
       config = new GatewayConfig({
         apiKey: apiKey || process.env.NXGATE_API_KEY || '',
         webhookBaseUrl: webhookBaseUrl || process.env.WEBHOOK_BASE_URL || 'http://localhost:5000',
-        apiUrl: apiUrl || 'https://nxgate.com.br/api',
+        apiUrl: apiUrl || 'https://api.nxgate.com.br',
         defaultCpf: defaultCpf || process.env.NXGATE_DEFAULT_CPF || '000.000.000-00'
       })
     }

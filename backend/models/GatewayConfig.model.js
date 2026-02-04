@@ -12,7 +12,7 @@ const gatewayConfigSchema = new mongoose.Schema(
     },
     apiUrl: {
       type: String,
-      default: 'https://nxgate.com.br/api'
+      default: 'https://api.nxgate.com.br'
     },
     defaultCpf: {
       type: String,
@@ -35,7 +35,7 @@ gatewayConfigSchema.statics.getConfig = async function() {
       config = await this.create({
         apiKey: process.env.NXGATE_API_KEY || '',
         webhookBaseUrl: process.env.WEBHOOK_BASE_URL || 'http://localhost:5000',
-        apiUrl: 'https://nxgate.com.br/api',
+        apiUrl: 'https://api.nxgate.com.br',
         defaultCpf: process.env.NXGATE_DEFAULT_CPF || '000.000.000-00'
       })
   }

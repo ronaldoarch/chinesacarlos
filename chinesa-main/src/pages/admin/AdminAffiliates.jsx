@@ -9,6 +9,15 @@ function AdminAffiliates() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [configSaving, setConfigSaving] = useState(false)
+  const [configError, setConfigError] = useState(null)
+  const [configSuccess, setConfigSuccess] = useState(null)
+  const [affiliateConfig, setAffiliateConfig] = useState({
+    affiliateCpa: 0,
+    affiliateRevShare: 0,
+    affiliateSkipDeposits: 0,
+    affiliateTotalDepositsCycle: 0
+  })
 
   useEffect(() => {
     loadAffiliates()
@@ -35,10 +44,43 @@ function AdminAffiliates() {
       const response = await api.getAffiliateDetailsAdmin(userId)
       if (response.success) {
         setSelectedAffiliate(response.data)
+        setAffiliateConfig({
+          affiliateCpa: response.data.user?.affiliateCpa || 0,
+          affiliateRevShare: response.data.user?.affiliateRevShare || 0,
+          affiliateSkipDeposits: response.data.user?.affiliateSkipDeposits || 0,
+          affiliateTotalDepositsCycle: response.data.user?.affiliateTotalDepositsCycle || 0
+        })
+        setConfigError(null)
+        setConfigSuccess(null)
       }
     } catch (error) {
       console.error('Error loading affiliate details:', error)
       alert('Erro ao carregar detalhes do afiliado')
+    }
+  }
+
+  const handleSaveConfig = async () => {
+    if (!selectedAffiliate?.user?.id) return
+    
+    try {
+      setConfigSaving(true)
+      setConfigError(null)
+      setConfigSuccess(null)
+      
+      const response = await api.updateAffiliateConfig(selectedAffiliate.user.id, affiliateConfig)
+      if (response.success) {
+        setConfigSuccess('Configuração salva com sucesso!')
+        setTimeout(() => setConfigSuccess(null), 3000)
+        // Reload affiliate details to get updated data
+        await loadAffiliateDetails(selectedAffiliate.user.id)
+      } else {
+        setConfigError(response.message || 'Erro ao salvar configuração')
+      }
+    } catch (error) {
+      console.error('Error saving affiliate config:', error)
+      setConfigError(error.message || 'Erro ao salvar configuração')
+    } finally {
+      setConfigSaving(false)
     }
   }
 
@@ -192,6 +234,94 @@ function AdminAffiliates() {
                     <div>
                       <label>Total Recompensas:</label>
                       <span className="amount">{formatCurrency(selectedAffiliate.stats?.totalRewards)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="details-section">
+                  <h3>Configuração de Comissões</h3>
+                  {configError && (
+                    <div className="config-error">
+                      <i className="fa-solid fa-circle-exclamation"></i>
+                      <span>{configError}</span>
+                    </div>
+                  )}
+                  {configSuccess && (
+                    <div className="config-success">
+                      <i className="fa-solid fa-circle-check"></i>
+                      <span>{configSuccess}</span>
+                    </div>
+                  )}
+                  <div className="config-form">
+                    <div className="config-form-group">
+                      <label>CPA (R$)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={affiliateConfig.affiliateCpa}
+                        onChange={(e) => setAffiliateConfig({ ...affiliateConfig, affiliateCpa: parseFloat(e.target.value) || 0 })}
+                        placeholder="0.00"
+                      />
+                      <small>Valor pago apenas no primeiro depósito do indicado</small>
+                    </div>
+                    <div className="config-form-group">
+                      <label>RevShare (%)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        value={affiliateConfig.affiliateRevShare}
+                        onChange={(e) => setAffiliateConfig({ ...affiliateConfig, affiliateRevShare: parseFloat(e.target.value) || 0 })}
+                        placeholder="0.00"
+                      />
+                      <small>Percentual sobre o ganho da plataforma do indicado</small>
+                    </div>
+                    <div className="config-form-group">
+                      <label>Pular Depósitos</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={affiliateConfig.affiliateSkipDeposits}
+                        onChange={(e) => setAffiliateConfig({ ...affiliateConfig, affiliateSkipDeposits: parseInt(e.target.value) || 0 })}
+                        placeholder="0"
+                      />
+                      <small>Quantos depósitos pular no ciclo (ex: 1)</small>
+                    </div>
+                    <div className="config-form-group">
+                      <label>Total de Depósitos no Ciclo</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={affiliateConfig.affiliateTotalDepositsCycle}
+                        onChange={(e) => setAffiliateConfig({ ...affiliateConfig, affiliateTotalDepositsCycle: parseInt(e.target.value) || 0 })}
+                        placeholder="0"
+                      />
+                      <small>Total de depósitos no ciclo (ex: 2 para pular 1 a cada 2, ou 10 para pular 5 a cada 10)</small>
+                    </div>
+                    {affiliateConfig.affiliateTotalDepositsCycle > 0 && (
+                      <div className="config-info">
+                        <i className="fa-solid fa-info-circle"></i>
+                        <span>
+                          Configuração: Pular {affiliateConfig.affiliateSkipDeposits} depósito(s) a cada {affiliateConfig.affiliateTotalDepositsCycle} depósito(s).
+                          O afiliado ganhará RevShare em {affiliateConfig.affiliateTotalDepositsCycle - affiliateConfig.affiliateSkipDeposits} depósito(s) e não ganhará em {affiliateConfig.affiliateSkipDeposits} depósito(s).
+                        </span>
+                      </div>
+                    )}
+                    <div className="config-form-actions">
+                      <button
+                        type="button"
+                        className="config-save-btn"
+                        onClick={handleSaveConfig}
+                        disabled={configSaving}
+                      >
+                        {configSaving ? (
+                          <><i className="fa-solid fa-spinner fa-spin"></i> Salvando...</>
+                        ) : (
+                          <><i className="fa-solid fa-save"></i> Salvar Configuração</>
+                        )}
+                      </button>
                     </div>
                   </div>
                 </div>

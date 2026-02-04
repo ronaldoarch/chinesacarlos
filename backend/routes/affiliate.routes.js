@@ -330,6 +330,10 @@ router.get('/admin/:userId', protect, isAdmin, async (req, res) => {
           username: user.username,
           referralCode: user.referralCode,
           affiliateBalance: user.affiliateBalance || 0,
+          affiliateCpa: user.affiliateCpa || 0,
+          affiliateRevShare: user.affiliateRevShare || 0,
+          affiliateSkipDeposits: user.affiliateSkipDeposits || 0,
+          affiliateTotalDepositsCycle: user.affiliateTotalDepositsCycle || 0,
           createdAt: user.createdAt
         },
         stats,
@@ -351,6 +355,90 @@ router.get('/admin/:userId', protect, isAdmin, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Erro ao buscar detalhes do afiliado',
+      error: error.message
+    })
+  }
+})
+
+// @route   PUT /api/affiliate/admin/:userId/config
+// @desc    Update affiliate configuration (CPA, RevShare, skip deposits)
+// @access  Private/Admin
+router.put('/admin/:userId/config', protect, isAdmin, async (req, res) => {
+  try {
+    const { affiliateCpa, affiliateRevShare, affiliateSkipDeposits, affiliateTotalDepositsCycle } = req.body
+    const user = await User.findById(req.params.userId)
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Usuário não encontrado'
+      })
+    }
+
+    // Validações
+    if (affiliateCpa !== undefined) {
+      if (affiliateCpa < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'CPA deve ser maior ou igual a zero'
+        })
+      }
+      user.affiliateCpa = affiliateCpa
+    }
+
+    if (affiliateRevShare !== undefined) {
+      if (affiliateRevShare < 0 || affiliateRevShare > 100) {
+        return res.status(400).json({
+          success: false,
+          message: 'RevShare deve estar entre 0 e 100'
+        })
+      }
+      user.affiliateRevShare = affiliateRevShare
+    }
+
+    if (affiliateSkipDeposits !== undefined) {
+      if (affiliateSkipDeposits < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Depósitos a pular deve ser maior ou igual a zero'
+        })
+      }
+      user.affiliateSkipDeposits = affiliateSkipDeposits
+    }
+
+    if (affiliateTotalDepositsCycle !== undefined) {
+      if (affiliateTotalDepositsCycle < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Total de depósitos no ciclo deve ser maior ou igual a zero'
+        })
+      }
+      if (affiliateTotalDepositsCycle > 0 && user.affiliateSkipDeposits >= affiliateTotalDepositsCycle) {
+        return res.status(400).json({
+          success: false,
+          message: 'Depósitos a pular deve ser menor que o total de depósitos no ciclo'
+        })
+      }
+      user.affiliateTotalDepositsCycle = affiliateTotalDepositsCycle
+    }
+
+    await user.save()
+
+    res.json({
+      success: true,
+      message: 'Configuração do afiliado atualizada com sucesso',
+      data: {
+        affiliateCpa: user.affiliateCpa,
+        affiliateRevShare: user.affiliateRevShare,
+        affiliateSkipDeposits: user.affiliateSkipDeposits,
+        affiliateTotalDepositsCycle: user.affiliateTotalDepositsCycle
+      }
+    })
+  } catch (error) {
+    console.error('Update affiliate config error:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao atualizar configuração do afiliado',
       error: error.message
     })
   }

@@ -340,6 +340,13 @@ class ApiService {
     })
   }
 
+  async updateAffiliateConfig(userId, configData) {
+    return this.request(`/affiliate/admin/${userId}/config`, {
+      method: 'PUT',
+      body: JSON.stringify(configData)
+    })
+  }
+
   // Banner endpoints
   async getBanners() {
     return this.request('/banners', {

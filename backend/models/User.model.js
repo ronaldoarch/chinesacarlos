@@ -92,6 +92,29 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0
     },
+    // Configuração de afiliado (CPA e RevShare)
+    affiliateCpa: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
+    affiliateRevShare: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100
+    },
+    // Configuração de pular depósitos (ex: pular 1 a cada 2, ou 5 a cada 10)
+    affiliateSkipDeposits: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
+    affiliateTotalDepositsCycle: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
     lastLogin: {
       type: Date
     }

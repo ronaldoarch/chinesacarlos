@@ -3,6 +3,8 @@ import Transaction from '../models/Transaction.model.js'
 import User from '../models/User.model.js'
 import BonusConfig from '../models/BonusConfig.model.js'
 import WebhookLog from '../models/WebhookLog.model.js'
+import AffiliateDeposit from '../models/AffiliateDeposit.model.js'
+import GameTxnLog from '../models/GameTxnLog.model.js'
 import affiliateService from '../services/affiliate.service.js'
 import facebookService from '../services/facebook.service.js'
 
@@ -17,6 +19,160 @@ function calcDepositBonus(amount, isFirstDeposit, bonusConfig) {
     if (tier) percent = Number(tier.bonusPercent) || 0
   }
   return Math.round((amount * percent / 100) * 100) / 100
+}
+
+/**
+ * Process affiliate commissions (CPA and RevShare)
+ */
+async function processAffiliateCommissions(referredUser, transaction, depositAmount, isFirstDeposit) {
+  try {
+    const affiliate = await User.findById(referredUser.referredBy)
+    if (!affiliate) return
+
+    // Get affiliate configuration
+    const cpa = affiliate.affiliateCpa || 0
+    const revShare = affiliate.affiliateRevShare || 0
+    const skipDeposits = affiliate.affiliateSkipDeposits || 0
+    const totalDepositsCycle = affiliate.affiliateTotalDepositsCycle || 0
+
+    // Count existing deposits for this referred user
+    const existingDeposits = await AffiliateDeposit.countDocuments({
+      affiliate: affiliate._id,
+      referredUser: referredUser._id
+    })
+
+    // Calculate cycle position
+    let cyclePosition = 0
+    let isSkipped = false
+    
+    if (totalDepositsCycle > 0) {
+      // Calculate position in current cycle (1-based)
+      cyclePosition = (existingDeposits % totalDepositsCycle) + 1
+      
+      // Determine if this deposit should be skipped
+      // Skip the last 'skipDeposits' positions in each cycle
+      // Example: skip 1 of 2 means skip position 2, keep position 1
+      // Example: skip 5 of 10 means skip positions 6-10, keep positions 1-5
+      const skipStart = totalDepositsCycle - skipDeposits + 1
+      isSkipped = cyclePosition >= skipStart && cyclePosition <= totalDepositsCycle
+    }
+
+    // Create affiliate deposit record
+    const affiliateDeposit = await AffiliateDeposit.create({
+      affiliate: affiliate._id,
+      referredUser: referredUser._id,
+      transaction: transaction._id,
+      depositAmount,
+      isFirstDeposit,
+      cyclePosition,
+      isSkipped
+    })
+
+    let totalCommission = 0
+
+    // Process CPA (only on first deposit)
+    if (isFirstDeposit && cpa > 0) {
+      affiliateDeposit.cpaPaid = true
+      affiliateDeposit.cpaAmount = cpa
+      totalCommission += cpa
+      await affiliateDeposit.save()
+    }
+
+    // Process RevShare (only if not skipped)
+    if (!isSkipped && revShare > 0) {
+      // Get the last processed deposit to calculate incremental profit
+      const lastProcessedDeposit = await AffiliateDeposit.findOne({
+        affiliate: affiliate._id,
+        referredUser: referredUser._id,
+        revShareCalculated: true
+      }).sort({ createdAt: -1 })
+
+      // Calculate platform profit for this user since last processed deposit
+      // Profit = Deposits - Withdrawals - Net Game Wins
+      const depositsQuery = {
+        user: referredUser._id,
+        type: 'deposit',
+        status: 'paid'
+      }
+      if (lastProcessedDeposit?.transaction) {
+        depositsQuery.createdAt = { $gte: lastProcessedDeposit.createdAt }
+      }
+
+      const deposits = await Transaction.aggregate([
+        { $match: depositsQuery },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: '$netAmount' }
+          }
+        }
+      ])
+
+      const withdrawalsQuery = {
+        user: referredUser._id,
+        type: 'withdraw',
+        status: 'paid'
+      }
+      if (lastProcessedDeposit?.transaction) {
+        withdrawalsQuery.createdAt = { $gte: lastProcessedDeposit.createdAt }
+      }
+
+      const withdrawals = await Transaction.aggregate([
+        { $match: withdrawalsQuery },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: '$netAmount' }
+          }
+        }
+      ])
+
+      // Calculate net game wins since last processed deposit
+      const gameResultsQuery = { user: referredUser._id }
+      if (lastProcessedDeposit?.transaction) {
+        gameResultsQuery.createdAt = { $gte: lastProcessedDeposit.createdAt }
+      }
+
+      const gameResults = await GameTxnLog.aggregate([
+        { $match: gameResultsQuery },
+        {
+          $group: {
+            _id: null,
+            totalBets: { $sum: '$betCents' },
+            totalWins: { $sum: '$winCents' }
+          }
+        }
+      ])
+
+      const incrementalDeposits = deposits[0]?.total || 0
+      const incrementalWithdrawals = withdrawals[0]?.total || 0
+      const incrementalBets = (gameResults[0]?.totalBets || 0) / 100
+      const incrementalWins = (gameResults[0]?.totalWins || 0) / 100
+      const incrementalNetGameWins = incrementalWins - incrementalBets
+
+      // Platform profit = Deposits - Withdrawals - Net Game Wins
+      // If incrementalNetGameWins is positive, user won, so subtract from profit
+      // If incrementalNetGameWins is negative, user lost, so add to profit
+      const incrementalProfit = incrementalDeposits - incrementalWithdrawals - incrementalNetGameWins
+
+      // Calculate RevShare only on positive profit
+      if (incrementalProfit > 0) {
+        const revShareAmount = Math.round((incrementalProfit * revShare / 100) * 100) / 100
+        affiliateDeposit.revShareCalculated = true
+        affiliateDeposit.revShareAmount = revShareAmount
+        totalCommission += revShareAmount
+        await affiliateDeposit.save()
+      }
+    }
+
+    // Update affiliate balance
+    if (totalCommission > 0) {
+      affiliate.affiliateBalance = (affiliate.affiliateBalance || 0) + totalCommission
+      await affiliate.save()
+    }
+  } catch (error) {
+    console.error('Process affiliate commissions error:', error)
+  }
 }
 
 const router = express.Router()
@@ -114,6 +270,11 @@ router.post('/pix', async (req, res) => {
         // Update referral qualification and VIP level
         await affiliateService.updateReferralQualification(user._id)
         await affiliateService.updateVipLevel(user._id)
+
+        // Process affiliate commissions (CPA and RevShare)
+        if (user.referredBy) {
+          await processAffiliateCommissions(user, transaction, depositAmount, isFirstDeposit)
+        }
 
         // Facebook Conversions API: first deposit = Purchase
         if (isFirstDeposit) {

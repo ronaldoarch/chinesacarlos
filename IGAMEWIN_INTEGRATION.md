@@ -24,11 +24,10 @@ IGAMEWIN_SAMPLES_MODE=false
 ## Configuração no painel iGameWin
 
 - **API Type:** Seamless Mode
-- **Site EndPoint:** Coloque só a base (o painel não aceita path como `/gold_api`):
-  ```
-  https://api.midas777.fun
-  ```
-  O backend aceita POST na raiz (`/`), então a iGameWin chamará `https://api.midas777.fun` diretamente.
+- **Site EndPoint:** Coloque a base (o painel não aceita path como `/gold_api`). Tente:
+  - `https://api.midas777.fun` ou
+  - `https://api.midas777.fun/api`
+- Se aparecer **ERROR_GET_BALANCE_END_POINT** no launch, a iGameWin não consegue alcançar o endpoint — teste a outra URL.
 
 ## Fluxo Seamless
 

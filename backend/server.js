@@ -58,12 +58,10 @@ app.use(cors({
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-// API Link Guide: Site EndPoint - user_balance & transaction (CORS permissivo para jogo iframe)
-// O painel iGameWin aceita só a base (ex: https://api.midas777.fun). Oferecemos:
-// - POST / (raiz) - quando o painel aceita só a base
-// - POST /gold_api - se o painel permitir path
-// - POST /api/games/seamless - alternativa
+// API Link Guide: Site EndPoint - user_balance & transaction (ERROR_GET_BALANCE_END_POINT = iGameWin não alcança nosso endpoint)
+// Oferecemos várias URLs para máxima compatibilidade com o painel:
 app.post('/', cors({ origin: true, credentials: false }), seamlessRoutes)
+app.post('/api', cors({ origin: true, credentials: false }), seamlessRoutes)
 app.use('/gold_api', cors({ origin: true, credentials: false }), seamlessRoutes)
 app.use('/api/games/seamless', cors({ origin: true, credentials: false }), seamlessRoutes)
 

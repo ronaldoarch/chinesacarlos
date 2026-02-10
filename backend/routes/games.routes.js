@@ -297,9 +297,13 @@ router.post('/launch', protect, async (req, res) => {
         }
       })
     } else {
+      const msg = response.msg || 'Erro ao lançar jogo'
+      if (msg === 'ERROR_GET_BALANCE_END_POINT') {
+        console.warn('iGameWin ERROR_GET_BALANCE_END_POINT: verifique Site EndPoint no painel (ex: https://api.midas777.fun ou https://api.midas777.fun/api)')
+      }
       res.status(400).json({
         success: false,
-        message: response.msg || 'Erro ao lançar jogo'
+        message: msg
       })
     }
   } catch (error) {

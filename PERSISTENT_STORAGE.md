@@ -40,11 +40,22 @@ Se você está usando Colify para deploy, siga estes passos:
 - Você pode escolher outro Source Path se preferir (ex: `/var/data/uploads`)
 - **O volume deve estar no serviço BACKEND**, não no Frontend
 
+### ⚠️ OBRIGATÓRIO: UPLOADS_PATH nas Environment Variables
+
+Com Base Directory `/backend`, o app roda em `/app` e o caminho padrão é `/app/uploads`.
+O volume monta em `/app/backend/uploads`. **Sem UPLOADS_PATH os arquivos vão para `/app/uploads` (efêmero).**
+
+Adicione no Backend (Environment Variables):
+
+```env
+UPLOADS_PATH=/app/backend/uploads
+```
+
 ### Se os arquivos ainda sumirem
 
-1. Confira os logs do backend após o deploy – ele exibe: `📁 Servindo uploads em: /caminho/...`
-2. Use esse caminho como **Destination Path** no volume
-3. Opcional: adicione a variável `UPLOADS_PATH=/app/backend/uploads` nas env vars do Backend
+1. Confira os logs do backend – deve exibir: `📁 Servindo uploads em: /app/backend/uploads`
+2. Se mostrar `/app/uploads`, adicione `UPLOADS_PATH=/app/backend/uploads`
+3. Faça um novo deploy após alterar
 4. Veja [TROUBLESHOOTING_STORAGE.md](TROUBLESHOOTING_STORAGE.md) para mais detalhes
 
 ## 🔧 Configuração de Volume Docker

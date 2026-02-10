@@ -36,7 +36,10 @@ JWT_EXPIRE=7d
 FRONTEND_URL=https://seu-frontend.colify.app
 NXGATE_API_KEY=sua-api-key-nxgate
 WEBHOOK_BASE_URL=https://seu-backend.colify.app
+UPLOADS_PATH=/app/backend/uploads
 ```
+
+⚠️ **UPLOADS_PATH** é obrigatório para logos e banners persistirem. Com Base Directory `/backend`, o app usa `/app/uploads` por padrão; o volume monta em `/app/backend/uploads`. Sem essa variável, os arquivos somem a cada deploy.
 
 ### Build Commands (Backend)
 

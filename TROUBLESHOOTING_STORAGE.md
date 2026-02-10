@@ -28,15 +28,15 @@ O **Destination Path** no Storages deve corresponder exatamente ao caminho onde 
 2. O backend agora imprime: `📁 Servindo uploads em: /caminho/...`
 3. Use esse caminho como **Destination Path** no volume.
 
-### 3. Variável UPLOADS_PATH (opcional)
+### 3. Variável UPLOADS_PATH (obrigatório no Colify)
 
-Se o caminho padrão não bater com o volume, configure explicitamente:
+Com Base Directory `/backend`, o app usa `/app/uploads` por padrão, mas o volume monta em `/app/backend/uploads`. Os caminhos não batem — os arquivos vão para pasta efêmera.
+
+**Solução:** adicione nas **Environment Variables** do Backend:
 
 ```env
 UPLOADS_PATH=/app/backend/uploads
 ```
-
-No Colify, add essa variável nas **Environment Variables** do serviço Backend.
 
 O `UPLOADS_PATH` deve ser **exatamente** o mesmo que o **Destination Path** do volume.
 

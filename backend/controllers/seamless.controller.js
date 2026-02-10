@@ -5,16 +5,15 @@ import igamewinService from '../services/igamewin.service.js'
 /** API Link Guide: Seamless Site API - user_balance & transaction */
 export async function handleSeamlessRequest(req, res) {
   try {
-    const { method, user_code } = req.body
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('[Seamless]', method, 'user_code:', user_code)
-    }
+    const { method, user_code, agent_code } = req.body
+    console.log('[Seamless]', method, 'user_code:', user_code, 'agent:', agent_code)
     if (!method || !user_code) {
       return res.status(400).json({ status: 0, msg: 'INVALID_PARAMETER' })
     }
 
     const user = await User.findById(user_code)
     if (!user) {
+      console.warn('[Seamless] INVALID_USER - user_code:', user_code, 'not found')
       return res.status(404).json({ status: 0, msg: 'INVALID_USER', user_balance: 0 })
     }
 

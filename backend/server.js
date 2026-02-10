@@ -91,10 +91,11 @@ app.use(express.static(publicPath, {
   }
 }))
 
-// Routes
+// Routes (tracking antes de admin — /config/public é rota pública)
 app.use('/api/auth', authRoutes)
 app.use('/api/payments', paymentRoutes)
 app.use('/api/webhooks', webhookRoutes)
+app.use('/api/admin/tracking', trackingRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/games', gamesRoutes)
 app.use('/api/gateway', gatewayRoutes)
@@ -108,7 +109,6 @@ app.use('/api/popups', popupRoutes)
 app.use('/api/jackpot', jackpotRoutes)
 app.use('/api/support', supportRoutes)
 app.use('/api/promotions', promotionRoutes)
-app.use('/api/admin/tracking', trackingRoutes)
 app.use('/api/pix-accounts', pixAccountRoutes)
 app.use('/api/site-config', siteConfigRoutes)
 

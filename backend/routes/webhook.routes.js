@@ -187,7 +187,7 @@ function logWebhook(source, req, extra = {}) {
     method: req.method,
     bodySummary,
     bodyKeys: Object.keys(body),
-    idTransaction: body.idTransaction || body.transactionId || body.transaction_id || body.tx_id || body?.data?.idTransaction,
+    idTransaction: body.externalId || body.idTransaction || body.transactionId || body.transaction_id || body.tx_id || body?.invoice?.externalId || body?.data?.idTransaction,
     ip: req.ip || req.connection?.remoteAddress,
     ...extra
   }).catch(err => console.error('WebhookLog create error:', err))
@@ -200,6 +200,7 @@ router.use(express.urlencoded({ extended: true }))
 function getIdTransaction(body) {
   return (
     body.externalId || body.idTransaction || body.transactionId || body.transaction_id || body.tx_id || body.id ||
+    body?.invoice?.externalId || body?.invoice?.idTransaction || body?.invoice?.transactionId ||
     body?.data?.externalId || body?.data?.idTransaction || body?.data?.transactionId || body?.data?.id || body?.data?.tx_id
   )
 }
@@ -235,10 +236,11 @@ router.post('/gatebox', async (req, res) => {
 
 async function processDepositWebhook(body, transaction) {
   const { status, type, data } = body
-  const rawStatus = (status ?? body.status ?? data?.status ?? '').toString().toUpperCase()
-  const rawType = (type ?? body.type ?? data?.type ?? '').toString().toUpperCase()
+  // Gatebox pode enviar status em body.invoice.status ou no topo
+  const rawStatus = (status ?? body.status ?? data?.status ?? body?.invoice?.status ?? '').toString().toUpperCase()
+  const rawType = (type ?? body.type ?? data?.type ?? body?.invoice?.type ?? '').toString().toUpperCase()
   let paymentStatus = 'pending'
-  const webhookData = data || body
+  const webhookData = data || body.invoice || body
   if (
     rawType.includes('PAID') || rawType === 'QR_CODE_COPY_AND_PASTE_PAID' ||
     rawStatus === 'PAID' || rawStatus === 'PAYED' || rawStatus === 'CONFIRMED' ||

@@ -294,23 +294,26 @@ async function processDepositWebhook(body, transaction) {
 
 async function processWithdrawWebhook(body, transaction) {
   const { type, status, fee } = body
-  // Reembolso automático: só consideramos "pago" com evidência explícita de sucesso; caso contrário = falha e reembolsar
+  // Gatebox PIX_PAY_OUT envia status em body.transaction.status (ex: COMPLETED); considerar como fonte principal
+  const txStatus = body.transaction?.status
+  const statusUpper = (txStatus ?? status ?? body.invoice?.status ?? body.status ?? '').toString().toUpperCase()
+  const typeUpper = (type ?? body.invoice?.type ?? body.type ?? body.event ?? '').toString().toUpperCase()
+
   let paymentStatus = 'failed'
   if (body._gateboxReversal) {
-    // PIX_REVERSAL / PIX_REFUND = estorno Gatebox -> falha e reembolso automático
     paymentStatus = 'failed'
   } else {
     const worked = body.worked === true || body.worked === 'true'
-    const statusUpper = (status ?? body.invoice?.status ?? body.status ?? '').toString().toUpperCase()
-    const typeUpper = (type ?? body.invoice?.type ?? body.type ?? '').toString().toUpperCase()
     const errorMsg = body.error || body.invoice?.error || body.motivo || body.message || body.reason || ''
     const errorStr = typeof errorMsg === 'string' ? errorMsg : (errorMsg?.message || JSON.stringify(errorMsg))
-    const hasError = !!errorStr || statusUpper === 'FAILED' || typeUpper === 'PIX_CASHOUT_ERROR' || /invalid|falha|error|invalid/i.test(errorStr)
+    const hasError = !!errorStr || typeUpper === 'PIX_CASHOUT_ERROR' || /invalid|falha|error|invalid/i.test(errorStr)
 
-    if (typeUpper === 'PIX_CASHOUT_SUCCESS' || statusUpper === 'SUCCESS') {
+    if (typeUpper === 'PIX_CASHOUT_SUCCESS' || statusUpper === 'SUCCESS' || statusUpper === 'COMPLETED') {
       paymentStatus = 'paid'
     } else if (worked && statusUpper !== 'ERROR' && statusUpper !== 'FAILED' && !hasError) {
       paymentStatus = 'paid'
+    } else if (statusUpper === 'FAILED' || statusUpper === 'ERROR') {
+      paymentStatus = 'failed'
     }
   }
   // Qualquer outro caso = falha (reembolso automático)

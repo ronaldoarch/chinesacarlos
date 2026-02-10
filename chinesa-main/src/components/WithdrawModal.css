@@ -406,6 +406,77 @@
   color: rgba(255, 255, 255, 0.5);
 }
 
+.withdraw-history-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 200px;
+}
+
+.withdraw-history-loading {
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.withdraw-history-card {
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.withdraw-history-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.withdraw-history-label {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+}
+
+.withdraw-history-value {
+  color: #fff;
+  font-weight: 500;
+}
+
+.withdraw-history-value.amount {
+  color: var(--gold, #d4af37);
+}
+
+.withdraw-history-status {
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.withdraw-history-status.status-paid {
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.2);
+}
+
+.withdraw-history-status.status-processing,
+.withdraw-history-status.status-pending {
+  color: #eab308;
+  background: rgba(234, 179, 8, 0.2);
+}
+
+.withdraw-history-status.status-failed,
+.withdraw-history-status.status-cancelled {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.2);
+}
+
 .withdraw-form {
   display: flex;
   flex-direction: column;

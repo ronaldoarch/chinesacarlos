@@ -35,6 +35,8 @@ function WithdrawModal({ isOpen, onClose, onBack, initialTab = 'saque', onWithdr
   const [withdrawSuccess, setWithdrawSuccess] = useState('')
   const [minWithdraw, setMinWithdraw] = useState(20)
   const [maxWithdraw, setMaxWithdraw] = useState(5000)
+  const [withdrawHistory, setWithdrawHistory] = useState([])
+  const [loadingHistory, setLoadingHistory] = useState(false)
   const formatWithdrawAmount = (value) => {
     const trimmed = value.trim()
     if (trimmed === '') return ''
@@ -78,11 +80,27 @@ function WithdrawModal({ isOpen, onClose, onBack, initialTab = 'saque', onWithdr
     }
   }
 
-  // Carregar contas PIX e limites sempre que o modal abrir ou quando mudar de aba
+  const loadWithdrawHistory = async () => {
+    try {
+      setLoadingHistory(true)
+      const response = await api.getTransactions({ type: 'withdraw', limit: 50 })
+      if (response.success) {
+        setWithdrawHistory(response.data?.transactions || [])
+      }
+    } catch (err) {
+      console.error('Error loading withdraw history:', err)
+      setWithdrawHistory([])
+    } finally {
+      setLoadingHistory(false)
+    }
+  }
+
+  // Carregar contas PIX, limites e histórico quando o modal abrir ou mudar de aba
   useEffect(() => {
     if (isOpen) {
       loadPixAccounts()
       loadWithdrawLimits()
+      if (activeTab === 'historico') loadWithdrawHistory()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, activeTab])
@@ -340,7 +358,10 @@ function WithdrawModal({ isOpen, onClose, onBack, initialTab = 'saque', onWithdr
           <button
             type="button"
             className={`withdraw-tab ${activeTab === 'historico' ? 'active' : ''}`}
-            onClick={() => setActiveTab('historico')}
+            onClick={() => {
+              setActiveTab('historico')
+              loadWithdrawHistory()
+            }}
           >
             <i className="fa-solid fa-clock-rotate-left"></i>
             <span>Histórico</span>
@@ -664,9 +685,46 @@ function WithdrawModal({ isOpen, onClose, onBack, initialTab = 'saque', onWithdr
         )}
 
         {activeTab === 'historico' && (
-          <div className="withdraw-history-empty">
-            <i className="fa-solid fa-wallet"></i>
-            <span>Você ainda não possui saques registrados.</span>
+          <div className="withdraw-history-container">
+            {loadingHistory ? (
+              <div className="withdraw-history-loading">
+                <i className="fa-solid fa-spinner fa-spin"></i>
+                <span>Carregando histórico...</span>
+              </div>
+            ) : withdrawHistory.length === 0 ? (
+              <div className="withdraw-history-empty">
+                <i className="fa-solid fa-wallet"></i>
+                <span>Você ainda não possui saques registrados.</span>
+              </div>
+            ) : (
+              withdrawHistory.map((tx) => (
+                <div key={tx._id} className="withdraw-history-card">
+                  <div className="withdraw-history-row">
+                    <span className="withdraw-history-label">Data</span>
+                    <span className="withdraw-history-value">
+                      {new Date(tx.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', '')}
+                    </span>
+                  </div>
+                  <div className="withdraw-history-row">
+                    <span className="withdraw-history-label">Valor</span>
+                    <span className="withdraw-history-value amount">
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }).format(tx.amount || 0)}
+                    </span>
+                  </div>
+                  <div className="withdraw-history-row">
+                    <span className="withdraw-history-label">Status</span>
+                    <span className={`withdraw-history-status status-${tx.status || 'pending'}`}>
+                      {tx.status === 'paid' && 'Pago'}
+                      {tx.status === 'processing' && 'Processando'}
+                      {tx.status === 'pending' && 'Pendente'}
+                      {tx.status === 'failed' && 'Falhou'}
+                      {tx.status === 'cancelled' && 'Cancelado'}
+                      {!['paid', 'processing', 'pending', 'failed', 'cancelled'].includes(tx.status) && (tx.status || '—')}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         )}
       </div>

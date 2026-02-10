@@ -24,11 +24,11 @@ IGAMEWIN_SAMPLES_MODE=false
 ## Configuração no painel iGameWin
 
 - **API Type:** Seamless Mode
-- **Site EndPoint (API Link Guide):** A doc exige `POST https://domain/gold_api`. Use a URL completa:
+- **Site EndPoint:** O painel aceita só a base. Coloque:
   ```
-  https://api.midas777.fun/gold_api
+  https://api.midas777.fun
   ```
-- Se o painel não aceitar path, tente: `https://api.midas777.fun` (o backend também responde em `/`).
+- A iGameWin completa com `/gold_api` — chama `POST https://api.midas777.fun/gold_api` para user_balance e transaction. Nosso backend responde em `/gold_api` e em `/` (raiz).
 
 ## Fluxo Seamless
 

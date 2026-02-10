@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { SupportProvider } from './contexts/SupportContext'
 import { useFacebookPixel } from './hooks/useFacebookPixel'
+import { useFavicon } from './hooks/useFavicon'
 import api from './services/api'
 import Header from './components/Header'
 import NavigationIcons from './components/NavigationIcons'
@@ -34,6 +35,7 @@ import './styles/App.css'
 function AppContent() {
   const { isAuthenticated, user, logout, refreshUser } = useAuth()
   const { trackEvent } = useFacebookPixel()
+  useFavicon() // Atualiza favicon com a logo da API
   const [isAuthOpen, setIsAuthOpen] = React.useState(false)
   const [authTab, setAuthTab] = React.useState('register')
   const [isPromotionsOpen, setIsPromotionsOpen] = React.useState(false)

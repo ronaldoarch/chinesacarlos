@@ -6,7 +6,7 @@ const WEBHOOK_BASE_URL = process.env.WEBHOOK_BASE_URL || 'http://localhost:5000'
 
 /**
  * Normaliza chave PIX e documento para o formato aceito pela Gatebox.
- * - PHONE: só dígitos, com código do país 55 (ex: 5594992961626)
+ * - PHONE: formato +55 (ex: +5594992961626), conforme exigido pela API
  * - CPF/CNPJ: só dígitos, sem pontuação
  * - EMAIL: trim, minúsculo
  * - RANDOM: trim
@@ -17,10 +17,11 @@ function normalizePixKeyForGatebox(key, keyType) {
   const type = (keyType || '').toUpperCase()
   if (type === 'PHONE') {
     const digits = trimmed.replace(/\D/g, '')
-    if (digits.length === 11) return `55${digits}` // DDD + 9 + número
-    if (digits.length === 13 && digits.startsWith('55')) return digits
-    if (digits.length === 12 && digits.startsWith('55')) return digits // 55 + 10 dígitos (antigo)
-    return digits.length >= 10 ? `55${digits.slice(-11)}` : trimmed
+    if (digits.length === 11) return `+55${digits}` // +55 + DDD + 9 + número
+    if (digits.length === 13 && digits.startsWith('55')) return `+${digits}`
+    if (digits.length === 12 && digits.startsWith('55')) return `+${digits}` // +55 + 10 dígitos (antigo)
+    if (digits.length >= 10) return `+55${digits.slice(-11)}`
+    return trimmed.startsWith('+') ? trimmed : `+${trimmed}`
   }
   if (type === 'CPF' || type === 'CNPJ') return trimmed.replace(/\D/g, '')
   if (type === 'EMAIL') return trimmed.toLowerCase()

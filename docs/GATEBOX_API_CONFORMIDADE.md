@@ -37,7 +37,7 @@ Análise da coleção **GATEBOX API.postman_collection.json** em relação ao ba
 | **Opcional:** `description` | Enviado quando fornecido | ✅ |
 | **documentNumber:** “obrigatório apenas se validação de chave pix estiver ativa” | Enviado só quando há documento (≥11 dígitos) | ✅ |
 | Chave PIX “sem pontuação” (pix-search) | Chave normalizada em `normalizePixKeyForGatebox`: | ✅ |
-| | • **PHONE:** só dígitos + prefixo 55 (ex: 5594992961626) | |
+| | • **PHONE:** formato +55 (ex: +5594992961626), conforme exigido pela API | |
 | | • **CPF/CNPJ:** só dígitos | |
 | | • **EMAIL:** trim + minúsculo | |
 | | • **RANDOM:** trim | |
@@ -67,5 +67,5 @@ Análise da coleção **GATEBOX API.postman_collection.json** em relação ao ba
 - **Auth, Cash-In, Cash-Out e Status** estão alinhados com a coleção Postman e com as regras de formato (documento e chave PIX sem pontuação, telefone com 55).
 - **Ajustes aplicados:**
   - Cash-In: `document` só é enviado quando existe e tem ≥11 dígitos; `name` com fallback `"Pagador"`.
-  - Cash-Out: chave e documento já normalizados (incluindo PHONE com 55).
+  - Cash-Out: chave e documento já normalizados (incluindo PHONE no formato +55).
 - Endpoints de validação de chave, saldo e MEDs não são obrigatórios para o fluxo atual de depósito/saque.

@@ -5,6 +5,8 @@ import igamewinService from '../services/igamewin.service.js'
 import GameConfig from '../models/GameConfig.model.js'
 import seamlessRoutes from './seamless.routes.js'
 
+const router = express.Router()
+
 // @route   GET /api/games/config
 // @desc    Get game configuration
 // @access  Private/Admin

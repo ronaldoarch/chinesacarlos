@@ -294,48 +294,48 @@ async function processDepositWebhook(body, transaction) {
 
 async function processWithdrawWebhook(body, transaction) {
   const { type, status, fee } = body
-  // Gatebox PIX_PAY_OUT envia status em body.transaction.status (ex: COMPLETED); considerar como fonte principal
+  // Gatebox pode enviar vários webhooks (ex: primeiro processing, depois COMPLETED). Só reembolsar em falha explícita.
   const txStatus = body.transaction?.status
   const statusUpper = (txStatus ?? status ?? body.invoice?.status ?? body.status ?? '').toString().toUpperCase()
   const typeUpper = (type ?? body.invoice?.type ?? body.type ?? body.event ?? '').toString().toUpperCase()
 
-  let paymentStatus = 'failed'
+  let paymentStatus = null
   if (body._gateboxReversal) {
     paymentStatus = 'failed'
+  } else if (typeUpper === 'PIX_CASHOUT_SUCCESS' || statusUpper === 'SUCCESS' || statusUpper === 'COMPLETED') {
+    paymentStatus = 'paid'
   } else {
     const worked = body.worked === true || body.worked === 'true'
     const errorMsg = body.error || body.invoice?.error || body.motivo || body.message || body.reason || ''
     const errorStr = typeof errorMsg === 'string' ? errorMsg : (errorMsg?.message || JSON.stringify(errorMsg))
     const hasError = !!errorStr || typeUpper === 'PIX_CASHOUT_ERROR' || /invalid|falha|error|invalid/i.test(errorStr)
-
-    if (typeUpper === 'PIX_CASHOUT_SUCCESS' || statusUpper === 'SUCCESS' || statusUpper === 'COMPLETED') {
-      paymentStatus = 'paid'
-    } else if (worked && statusUpper !== 'ERROR' && statusUpper !== 'FAILED' && !hasError) {
+    if (worked && statusUpper !== 'ERROR' && statusUpper !== 'FAILED' && !hasError) {
       paymentStatus = 'paid'
     } else if (statusUpper === 'FAILED' || statusUpper === 'ERROR') {
       paymentStatus = 'failed'
     }
   }
-  // Qualquer outro caso = falha (reembolso automático)
-  // Verificar ANTES de sobrescrever: se estava 'processing', o saldo já foi debitado no request do saque
+
   const hadBalanceDeducted = transaction.status === 'processing'
 
-  transaction.status = paymentStatus
   transaction.webhookReceived = true
   transaction.webhookData = body
   if (fee !== undefined && fee !== null) {
     transaction.fee = parseFloat(fee) || 0
     transaction.netAmount = transaction.amount - transaction.fee
   }
+
   if (paymentStatus === 'paid') {
+    transaction.status = 'paid'
     transaction.paidAt = new Date(body.payment_date ? new Date(body.payment_date) : new Date())
     const user = await User.findById(transaction.user)
     if (user) {
       user.totalWithdrawals += transaction.netAmount || transaction.amount
       await user.save()
     }
-  } else {
-    // Falha no saque: reembolso automático quando o saldo já tinha sido debitado
+    console.log(`Webhook PIX Withdraw: Transação ${transaction.idTransaction} atualizada para paid`)
+  } else if (paymentStatus === 'failed') {
+    transaction.status = 'failed'
     transaction.failedAt = new Date()
     const user = await User.findById(transaction.user)
     if (user && hadBalanceDeducted) {
@@ -343,11 +343,15 @@ async function processWithdrawWebhook(body, transaction) {
       await user.save()
       console.log(`Webhook PIX Withdraw: Reembolso automático para usuário ${user._id} - R$ ${transaction.amount} (saque falhou)`)
     } else if (!hadBalanceDeducted) {
-      console.log(`Webhook PIX Withdraw: Saque falhou; saldo não havia sido debitado (status anterior não era processing), reembolso não necessário`)
+      console.log(`Webhook PIX Withdraw: Saque falhou; saldo não havia sido debitado, reembolso não necessário`)
     }
+    console.log(`Webhook PIX Withdraw: Transação ${transaction.idTransaction} atualizada para failed`)
+  } else {
+    // Status ambíguo (ex: primeiro webhook com processing): não alterar status e não reembolsar
+    console.log(`Webhook PIX Withdraw: Transação ${transaction.idTransaction} — status ambíguo (${statusUpper || 'vazio'}), aguardando webhook definitivo`)
   }
+
   await transaction.save()
-  console.log(`Webhook PIX Withdraw: Transação ${transaction.idTransaction} atualizada para ${paymentStatus}`)
 }
 
 // @route   POST /api/webhooks/pix

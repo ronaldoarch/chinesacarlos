@@ -14,9 +14,10 @@ function AdminGatewayConfig() {
   const [testResult, setTestResult] = useState(null)
   
   const [config, setConfig] = useState({
-    apiKey: '',
+    username: '',
+    password: '',
     webhookBaseUrl: '',
-    apiUrl: 'https://api.nxgate.com.br',
+    apiUrl: 'https://api.gatebox.com.br',
     isActive: true
   })
 
@@ -36,9 +37,10 @@ function AdminGatewayConfig() {
       const response = await api.getGatewayConfig()
       if (response.success) {
         setConfig({
-          apiKey: response.data.apiKey || '',
+          username: response.data.username || '',
+          password: response.data.password && response.data.password !== '***' ? response.data.password : '',
           webhookBaseUrl: response.data.webhookBaseUrl || '',
-          apiUrl: response.data.apiUrl || 'https://api.nxgate.com.br',
+          apiUrl: response.data.apiUrl || 'https://api.gatebox.com.br',
           isActive: response.data.isActive !== undefined ? response.data.isActive : true
         })
       }
@@ -55,10 +57,24 @@ function AdminGatewayConfig() {
       setError(null)
       setSuccess(null)
       
-      if (!config.apiKey || config.apiKey.trim() === '') {
-        setError('API Key é obrigatória')
+      if (!config.username || config.username.trim() === '') {
+        setError('Username é obrigatório')
         setSaving(false)
         return
+      }
+
+      // Se password for "***", não enviar (manter senha existente)
+      const configToSend = { ...config }
+      if (configToSend.password === '***' || configToSend.password.trim() === '') {
+        // Se não há senha configurada ainda, validar
+        const currentConfig = await api.getGatewayConfig().catch(() => null)
+        if (!currentConfig?.data?.password || currentConfig.data.password === '***') {
+          setError('Password é obrigatório')
+          setSaving(false)
+          return
+        }
+        // Se já existe senha, remover do payload para manter a existente
+        delete configToSend.password
       }
 
       if (!config.webhookBaseUrl || config.webhookBaseUrl.trim() === '') {
@@ -67,7 +83,7 @@ function AdminGatewayConfig() {
         return
       }
 
-      const response = await api.updateGatewayConfig(config)
+      const response = await api.updateGatewayConfig(configToSend)
       
       if (response.success) {
         setSuccess('Configuração salva com sucesso!')
@@ -165,25 +181,40 @@ function AdminGatewayConfig() {
       <div className="config-section">
         <h2>
           <i className="fa-solid fa-key"></i>
-          Credenciais NXGATE
+          Credenciais GATEBOX
         </h2>
         <p className="section-description">
-          Configure as credenciais do gateway de pagamento NXGATE para processar depósitos e saques via PIX.
+          Configure as credenciais do gateway de pagamento GATEBOX para processar depósitos e saques via PIX.
         </p>
         
         <div className="config-form">
           <div className="form-group full-width">
             <label>
-              API Key <span className="required">*</span>
+              Username <span className="required">*</span>
+            </label>
+            <input
+              type="text"
+              value={config.username}
+              onChange={(e) => setConfig(prev => ({ ...prev, username: e.target.value }))}
+              placeholder="Digite o username da GATEBOX"
+            />
+            <small className="form-hint">
+              Username fornecido pela GATEBOX
+            </small>
+          </div>
+
+          <div className="form-group full-width">
+            <label>
+              Password <span className="required">*</span>
             </label>
             <input
               type="password"
-              value={config.apiKey}
-              onChange={(e) => setConfig(prev => ({ ...prev, apiKey: e.target.value }))}
-              placeholder="Digite a API Key do NXGATE"
+              value={config.password}
+              onChange={(e) => setConfig(prev => ({ ...prev, password: e.target.value }))}
+              placeholder="Digite a password da GATEBOX"
             />
             <small className="form-hint">
-              Chave de API fornecida pelo NXGATE
+              Password fornecido pela GATEBOX
             </small>
           </div>
 
@@ -208,10 +239,10 @@ function AdminGatewayConfig() {
               type="text"
               value={config.apiUrl}
               onChange={(e) => setConfig(prev => ({ ...prev, apiUrl: e.target.value }))}
-              placeholder="https://api.nxgate.com.br"
+              placeholder="https://api.gatebox.com.br"
             />
             <small className="form-hint">
-              URL base da API do NXGATE (geralmente não precisa ser alterada)
+              URL base da API da GATEBOX (geralmente não precisa ser alterada)
             </small>
           </div>
 
@@ -239,7 +270,7 @@ function AdminGatewayConfig() {
             <p>{testResult.message}</p>
             {testResult.data && (
               <div className="test-details">
-                <p><strong>API Key configurada:</strong> {testResult.data.apiKeyConfigured}</p>
+                <p><strong>Credenciais configuradas:</strong> {testResult.data.credentialsConfigured || testResult.data.apiKeyConfigured || 'N/A'}</p>
                 <p><strong>Webhook URL:</strong> {testResult.data.webhookBaseUrl}</p>
                 <p><strong>API URL:</strong> {testResult.data.apiUrl}</p>
               </div>
@@ -271,7 +302,7 @@ function AdminGatewayConfig() {
           onClick={() => handleTest(true)}
           disabled={testing || testingReal || saving}
           className="test-btn test-btn-real"
-          title="Chama a API NXGATE e gera um PIX de teste (R$ 10)"
+          title="Chama a API GATEBOX e gera um PIX de teste (R$ 10)"
         >
           {testingReal ? (
             <>
@@ -311,7 +342,7 @@ function AdminGatewayConfig() {
         </h3>
         <ul>
           <li>
-            <strong>API Key:</strong> Obtenha sua chave de API no painel do NXGATE
+            <strong>Username e Password:</strong> Obtenha suas credenciais no painel da GATEBOX
           </li>
           <li>
             <strong>Webhook URL:</strong> Deve ser uma URL pública acessível (HTTPS em produção)
@@ -324,7 +355,7 @@ function AdminGatewayConfig() {
             </ul>
           </li>
           <li>
-            Configure esses endpoints no painel do NXGATE para receber notificações de pagamento
+            Configure esses endpoints no painel da GATEBOX para receber notificações de pagamento
           </li>
         </ul>
       </div>

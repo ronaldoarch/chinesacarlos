@@ -274,7 +274,7 @@ function TransactionDetailModal({ transaction, onClose, onStatusChange }) {
                 <span className="transaction-id">{fullTransaction._id}</span>
               </div>
               <div className="detail-item">
-                <label>ID NXGATE:</label>
+                <label>ID Gateway:</label>
                 <span>{fullTransaction.idTransaction || 'N/A'}</span>
               </div>
               <div className="detail-item">

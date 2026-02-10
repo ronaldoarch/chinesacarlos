@@ -205,10 +205,11 @@ router.post('/pix', async (req, res) => {
   try {
     const body = req.body || {}
     const { status, type, data } = body
-    // NXGATE and others may send idTransaction in various formats
+    // Gatebox and others may send idTransaction in various formats
+    // Gatebox may send externalId (which we use as our transaction ID)
     const idTransaction =
-      body.idTransaction || body.transactionId || body.transaction_id || body.tx_id || body.id ||
-      body?.data?.idTransaction || body?.data?.id || body?.data?.tx_id ||
+      body.externalId ||       body.externalId || body.idTransaction || body.transactionId || body.transaction_id || body.tx_id || body.id ||
+      body?.data?.externalId || body?.data?.idTransaction || body?.data?.transactionId || body?.data?.id || body?.data?.tx_id ||
       body?.data?.transaction_id
 
     // Respond immediately to avoid timeout
@@ -227,7 +228,7 @@ router.post('/pix', async (req, res) => {
       return
     }
 
-    // Handle different webhook formats (NXGATE, XGate, etc.)
+    // Handle different webhook formats (Gatebox, NXGATE, XGate, etc.)
     const rawStatus = (status ?? body.status ?? data?.status ?? '').toString().toUpperCase()
     const rawType = (type ?? body.type ?? data?.type ?? '').toString().toUpperCase()
     let paymentStatus = 'pending'
@@ -299,8 +300,8 @@ router.post('/pix-withdraw', async (req, res) => {
     const body = req.body || {}
     const { type, status, amount, fee } = body
     const idTransaction =
-      body.idTransaction || body.transactionId || body.transaction_id || body.tx_id || body.id ||
-      body?.data?.idTransaction || body?.data?.id || body?.data?.tx_id
+      body.externalId || body.idTransaction || body.transactionId || body.transaction_id || body.tx_id || body.id ||
+      body?.data?.externalId || body?.data?.idTransaction || body?.data?.transactionId || body?.data?.id || body?.data?.tx_id
 
     // Respond immediately to avoid timeout
     res.status(200).json({ status: 'received' })

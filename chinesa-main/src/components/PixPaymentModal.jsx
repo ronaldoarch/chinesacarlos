@@ -16,7 +16,7 @@ function PixPaymentModal({ isOpen, onClose, onBack, amountValue = 0, transaction
   const expiresAt = transaction?.expiresAt ? new Date(transaction.expiresAt) : null
   const hasPixCode = !!pixCode
 
-  // Gerar QR a partir do código PIX (NXGATE envia paymentCodeBase64 como texto em base64, não imagem)
+  // Gerar QR a partir do código PIX (gateway pode enviar paymentCodeBase64 como texto em base64, não imagem)
   useEffect(() => {
     if (!pixCode) {
       setGeneratedQrUrl('')

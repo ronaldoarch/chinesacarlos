@@ -5,7 +5,7 @@ import Transaction from '../models/Transaction.model.js'
 import User from '../models/User.model.js'
 import BonusConfig from '../models/BonusConfig.model.js'
 import GatewayConfig from '../models/GatewayConfig.model.js'
-import nxgateService from '../services/nxgate.service.js'
+import gateboxService from '../services/gatebox.service.js'
 
 const router = express.Router()
 
@@ -79,12 +79,13 @@ router.post(
         webhookUrl
       })
 
-      // Generate PIX via NXGATE
-      const pixResult = await nxgateService.generatePix({
+      // Generate PIX via GATEBOX
+      const pixResult = await gateboxService.generatePix({
         nome_pagador: user.username,
         documento_pagador: cpf,
         valor: amount,
-        webhook: transaction.webhookUrl
+        webhook: transaction.webhookUrl,
+        externalId: transaction._id.toString()
       })
 
       if (!pixResult.success) {
@@ -98,19 +99,22 @@ router.post(
       // Update transaction with PIX data (support multiple gateway response formats)
       const pixData = pixResult.data
       const raw = pixData?.data || pixData || {}
-      transaction.idTransaction = pixData?.idTransaction || pixData?.tx_id || raw?.idTransaction || raw?.tx_id
+      // Gatebox returns transactionId, but we use externalId (our transaction ID) for webhook matching
+      transaction.idTransaction = pixData?.transactionId || pixData?.idTransaction || pixData?.externalId || pixData?.tx_id || raw?.transactionId || raw?.idTransaction || raw?.externalId || raw?.tx_id || transaction._id.toString()
 
-      // NXGATE returns paymentCode and paymentCodeBase64 at top level
+      // GATEBOX returns qrCode and qrCodeImage at top level
       const copyPaste =
-        pixData?.paymentCode || raw?.paymentCode ||
+        pixData?.qrCode || pixData?.pixCopyPaste || pixData?.copyPaste ||
+        raw?.qrCode || raw?.pixCopyPaste || raw?.copyPaste ||
         raw?.pix_copy_and_paste || raw?.pixCopyPaste || raw?.copy_paste || raw?.qr_code || raw?.qrcode ||
         raw?.codigo_pix || raw?.codigo || raw?.pix_copia_cola || raw?.brcode || raw?.emv || raw?.payload ||
-        pixData?.qrCode || pixData?.pixCopyPaste || pixData?.codigo_pix || pixData?.copy_paste
+        pixData?.paymentCode || raw?.paymentCode
       const qrImage =
-        pixData?.paymentCodeBase64 || raw?.paymentCodeBase64 ||
-        raw?.base_64_image_url || raw?.base_64_image || raw?.qrCodeImage || raw?.qr_code_image ||
-        raw?.imagem_qr || raw?.qrcode_base64 || pixData?.qrCodeImage || pixData?.base_64_image
-      const expDate = raw?.expiration_date || raw?.expiresAt || raw?.expires_at || raw?.expiracao || pixData?.expiration_date
+        pixData?.qrCodeImage || pixData?.qrCodeBase64 ||
+        raw?.qrCodeImage || raw?.qrCodeBase64 ||
+        raw?.base_64_image_url || raw?.base_64_image || raw?.qr_code_image ||
+        raw?.imagem_qr || raw?.qrcode_base64 || pixData?.paymentCodeBase64 || raw?.paymentCodeBase64
+      const expDate = pixData?.expiresAt || raw?.expiration_date || raw?.expiresAt || raw?.expires_at || raw?.expiracao
 
       if (copyPaste) {
         transaction.pixCopyPaste = typeof copyPaste === 'string' ? copyPaste : (copyPaste?.valor || copyPaste?.code || String(copyPaste))
@@ -129,7 +133,7 @@ router.post(
 
       // If gateway didn't return PIX code, log raw response for debugging and fail
       if (!transaction.pixCopyPaste) {
-        console.warn('NXGATE deposit success but no PIX code found. Raw response:', JSON.stringify(pixData, null, 2))
+        console.warn('GATEBOX deposit success but no PIX code found. Raw response:', JSON.stringify(pixData, null, 2))
         await transaction.updateStatus('failed')
         return res.status(502).json({
           success: false,
@@ -253,7 +257,7 @@ router.post(
         webhookUrl
       })
 
-      // Process withdrawal via NXGATE
+      // Process withdrawal via GATEBOX
       // Usar CPF genérico configurado se não houver CPF fornecido
       const gatewayConfig = await GatewayConfig.getConfig()
       let documentoFormatted = null
@@ -269,25 +273,19 @@ router.post(
         documentoFormatted = gatewayConfig?.defaultCpf || '000.000.000-00'
       }
       
-      // Formatar CPF para o formato esperado (XXX.XXX.XXX-XX)
-      if (documentoFormatted && !documentoFormatted.includes('.')) {
-        const digits = documentoFormatted.replace(/\D/g, '')
-        if (digits.length === 11) {
-          documentoFormatted = `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`
-        }
-      }
-      
-      // Garantir formato válido (mesmo que seja genérico)
-      if (documentoFormatted && !documentoFormatted.match(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/)) {
-        documentoFormatted = gatewayConfig?.defaultCpf || '000.000.000-00' // Fallback para CPF genérico padrão
+      // Formatar CPF removendo pontuação (Gatebox espera sem pontuação)
+      if (documentoFormatted) {
+        documentoFormatted = documentoFormatted.replace(/\D/g, '')
       }
 
-      const withdrawResult = await nxgateService.withdrawPix({
+      const withdrawResult = await gateboxService.withdrawPix({
         valor: amount,
         chave_pix: pixKey,
         tipo_chave: pixKeyType,
         documento: documentoFormatted,
-        webhook: transaction.webhookUrl
+        nome_recebedor: holderName || 'Recebedor',
+        webhook: transaction.webhookUrl,
+        externalId: transaction._id.toString()
       })
 
       if (!withdrawResult.success) {
@@ -300,7 +298,8 @@ router.post(
 
       // Update transaction with withdrawal data
       const withdrawData = withdrawResult.data
-      transaction.idTransaction = withdrawData.idTransaction || withdrawData.transaction_id
+      // Gatebox returns transactionId, but we use externalId (our transaction ID) for webhook matching
+      transaction.idTransaction = withdrawData.transactionId || withdrawData.idTransaction || withdrawData.externalId || withdrawData.transaction_id || transaction._id.toString()
       await transaction.save()
 
       // Deduct balance immediately (will be reversed if withdrawal fails)

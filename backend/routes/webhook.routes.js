@@ -187,7 +187,7 @@ function logWebhook(source, req, extra = {}) {
     method: req.method,
     bodySummary,
     bodyKeys: Object.keys(body),
-    idTransaction: body.externalId || body.idTransaction || body.transactionId || body.transaction_id || body.tx_id || body?.invoice?.externalId || body?.data?.idTransaction,
+    idTransaction: body.externalId || body.idTransaction || body.transactionId || body.transaction_id || body.tx_id || body?.transaction?.externalId || body?.invoice?.externalId || body?.data?.idTransaction,
     ip: req.ip || req.connection?.remoteAddress,
     ...extra
   }).catch(err => console.error('WebhookLog create error:', err))
@@ -200,6 +200,7 @@ router.use(express.urlencoded({ extended: true }))
 function getIdTransaction(body) {
   return (
     body.externalId || body.idTransaction || body.transactionId || body.transaction_id || body.tx_id || body.id ||
+    body?.transaction?.externalId || body?.transaction?.idTransaction || body?.transaction?.transactionId ||
     body?.invoice?.externalId || body?.invoice?.idTransaction || body?.invoice?.transactionId ||
     body?.data?.externalId || body?.data?.idTransaction || body?.data?.transactionId || body?.data?.id || body?.data?.tx_id
   )

@@ -396,6 +396,38 @@ router.post('/sync-balance', protect, async (req, res) => {
 // @desc    API Link Guide: Seamless Site API - user_balance & transaction
 router.use('/seamless', seamlessRoutes)
 
+// @route   GET /api/games/agent-balance
+// @desc    money_info sem user_code - saldo do agente na iGameWin (doc: Get Balance of Agent)
+// @access  Private/Admin
+router.get('/agent-balance', protect, isAdmin, async (req, res) => {
+  try {
+    const response = await igamewinService.getMoneyInfo()
+    if (response.status === 1) {
+      const balanceReais = igamewinService.parseAgentBalanceFromMoneyInfo(response)
+      res.json({
+        success: true,
+        data: {
+          agentCode: response.agent?.agent_code,
+          balance: balanceReais,
+          balanceCents: response.agent?.balance ?? 0
+        }
+      })
+    } else {
+      res.status(400).json({
+        success: false,
+        message: response.msg || 'Erro ao buscar saldo do agente'
+      })
+    }
+  } catch (error) {
+    console.error('Get agent balance error:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao buscar saldo do agente',
+      error: error.message
+    })
+  }
+})
+
 // @route   GET /api/games/balance
 // @desc    Seamless: retorna saldo do usuário (nosso DB)
 // @access  Private

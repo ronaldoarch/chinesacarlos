@@ -68,30 +68,63 @@ function AdminUsers() {
 
   const handleExportPDF = async () => {
     try {
+      // Usar o serviço api para garantir URL correta
       const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
-      const token = localStorage.getItem('token')
+      let baseURL = API_BASE_URL.trim()
       
-      const response = await fetch(`${API_BASE_URL}/admin/users/export-pdf`, {
+      // Remover trailing slash se existir
+      baseURL = baseURL.replace(/\/$/, '')
+      
+      // Garantir que termine com /api
+      if (!baseURL.endsWith('/api')) {
+        baseURL = baseURL + '/api'
+      }
+      
+      const token = localStorage.getItem('token')
+      const url = `${baseURL}/admin/users/export-pdf`
+      
+      console.log('Exporting PDF from:', url) // Debug
+      
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/pdf'
         }
       })
 
       if (!response.ok) {
-        throw new Error('Erro ao exportar PDF')
+        let errorText = 'Erro desconhecido'
+        try {
+          errorText = await response.text()
+        } catch (e) {
+          // Ignora erro ao ler texto
+        }
+        console.error('PDF export error:', response.status, response.statusText, errorText)
+        throw new Error(`Erro ao exportar PDF: ${response.status} ${response.statusText}`)
       }
 
       const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
+      
+      // Verificar se é realmente um PDF
+      if (blob.size === 0) {
+        throw new Error('PDF vazio recebido do servidor')
+      }
+      
+      const urlBlob = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
-      a.href = url
+      a.href = urlBlob
       a.download = `usuarios_${new Date().toISOString().split('T')[0]}.pdf`
       document.body.appendChild(a)
       a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
+      
+      // Limpar após download
+      setTimeout(() => {
+        window.URL.revokeObjectURL(urlBlob)
+        document.body.removeChild(a)
+      }, 100)
     } catch (err) {
+      console.error('Export PDF error:', err)
       alert('Erro ao exportar PDF: ' + err.message)
     }
   }

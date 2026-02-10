@@ -5,8 +5,7 @@ const gameConfigSchema = new mongoose.Schema(
     agentCode: {
       type: String,
       required: true,
-      unique: true,
-      default: 'Midaslabs'
+      default: '4916vini'
     },
     agentToken: {
       type: String,
@@ -73,8 +72,8 @@ gameConfigSchema.statics.getConfig = async function() {
   let config = await this.findOne()
   if (!config) {
     config = await this.create({
-      agentCode: process.env.IGAMEWIN_AGENT_CODE || 'Midaslabs',
-      agentToken: process.env.IGAMEWIN_AGENT_TOKEN || '',
+      agentCode: process.env.IGAMEWIN_AGENT_CODE || '4916vini',
+      agentToken: process.env.IGAMEWIN_AGENT_TOKEN || '2b887a93fcbd11f098a0bc2411881493',
       agentSecret: process.env.IGAMEWIN_AGENT_SECRET || ''
     })
   }

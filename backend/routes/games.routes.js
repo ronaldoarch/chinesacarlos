@@ -3,22 +3,7 @@ import { protect } from '../middleware/auth.middleware.js'
 import { isAdmin } from '../middleware/admin.middleware.js'
 import igamewinService from '../services/igamewin.service.js'
 import GameConfig from '../models/GameConfig.model.js'
-import User from '../models/User.model.js'
-import GameTxnLog from '../models/GameTxnLog.model.js'
-
-const router = express.Router()
-
-/** Validate iGameWin seamless callback (agent_secret). No JWT - iGameWin calls us. */
-function validateSeamlessAgent(req, res, next) {
-  const agentCode = req.body?.agent_code
-  const agentSecret = req.body?.agent_secret
-  const expectedSecret = process.env.IGAMEWIN_AGENT_SECRET || ''
-  const expectedCode = process.env.IGAMEWIN_AGENT_CODE || 'Midaslabs'
-  if (!agentSecret || agentSecret !== expectedSecret || agentCode !== expectedCode) {
-    return res.status(403).json({ status: 0, msg: 'INVALID_AGENT' })
-  }
-  next()
-}
+import seamlessRoutes from './seamless.routes.js'
 
 // @route   GET /api/games/config
 // @desc    Get game configuration
@@ -51,8 +36,8 @@ router.put('/config', protect, isAdmin, async (req, res) => {
     
     if (!config) {
       config = new GameConfig({
-        agentCode: agentCode || process.env.IGAMEWIN_AGENT_CODE || 'Midaslabs',
-        agentToken: agentToken || process.env.IGAMEWIN_AGENT_TOKEN || '',
+        agentCode: agentCode || process.env.IGAMEWIN_AGENT_CODE || '4916vini',
+        agentToken: agentToken || process.env.IGAMEWIN_AGENT_TOKEN || '2b887a93fcbd11f098a0bc2411881493',
         agentSecret: agentSecret || process.env.IGAMEWIN_AGENT_SECRET || ''
       })
     }
@@ -402,106 +387,8 @@ router.post('/sync-balance', protect, async (req, res) => {
 })
 
 // @route   POST /api/games/seamless
-// @desc    iGameWin Seamless API callback - user_balance & transaction (no auth, validated by agent_secret)
-// @access  Public (iGameWin server)
-router.post('/seamless', validateSeamlessAgent, async (req, res) => {
-  try {
-    const { method, user_code } = req.body
-    if (!method || !user_code) {
-      return res.status(400).json({ status: 0, msg: 'INVALID_PARAMETER' })
-    }
-
-    const user = await User.findById(user_code)
-    if (!user) {
-      return res.status(404).json({ status: 0, msg: 'INVALID_USER', user_balance: 0 })
-    }
-
-    if (method === 'user_balance') {
-      const balanceReais = Math.max(0, user.balance || 0)
-      const balanceCents = Math.round(balanceReais * 100)
-      return res.json({ status: 1, user_balance: balanceCents })
-    }
-
-    if (method === 'transaction') {
-      const isSamples = igamewinService.isSamplesMode()
-      const { game_type, slot, agent_balance, user_balance: igamewinUserBalance } = req.body
-      const slotData = slot || req.body[game_type] || {}
-      const txnId = slotData.txn_id
-      const txnType = slotData.txn_type || 'debit_credit'
-      const betCents = Number(slotData.bet_money ?? slotData.bet ?? 0)
-      const winCents = Number(slotData.win_money ?? slotData.win ?? 0)
-
-      if (!txnId) {
-        return res.status(400).json({ status: 0, msg: 'INVALID_PARAMETER' })
-      }
-
-      const existing = await GameTxnLog.findOne({ txnId })
-      if (existing) {
-        const balanceCents = Math.round((existing.balanceAfterReais || 0) * 100)
-        return res.json({ status: 1, user_balance: balanceCents })
-      }
-
-      // Samples mode: agente em demo — não alterar saldo real do jogador; só retornar sucesso (doc iGameWin)
-      if (isSamples) {
-        const balanceCents = Math.round((user.balance || 0) * 100)
-        await GameTxnLog.create({
-          txnId,
-          user: user._id,
-          gameType: game_type,
-          providerCode: slotData.provider_code,
-          gameCode: slotData.game_code,
-          txnType: slotData.txn_type || 'debit_credit',
-          betCents,
-          winCents,
-          balanceAfterReais: user.balance || 0
-        })
-        return res.json({ status: 1, user_balance: balanceCents })
-      }
-
-      let deltaReais = 0
-      if (txnType === 'debit') {
-        deltaReais = -betCents / 100
-      } else if (txnType === 'credit') {
-        deltaReais = winCents / 100
-      } else {
-        deltaReais = (winCents - betCents) / 100
-      }
-
-      const currentBalance = Math.max(0, user.balance || 0)
-      const newBalance = currentBalance + deltaReais
-
-      if (newBalance < 0) {
-        return res.json({ status: 0, msg: 'INSUFFICIENT_USER_FUNDS', user_balance: Math.round(currentBalance * 100) })
-      }
-
-      user.balance = newBalance
-      user.bonusBalance = Math.min(user.bonusBalance || 0, user.balance)
-      if (deltaReais < 0) {
-        user.totalBets = (user.totalBets || 0) + Math.abs(deltaReais)
-      }
-      await user.save()
-
-      await GameTxnLog.create({
-        txnId,
-        user: user._id,
-        gameType: game_type,
-        providerCode: slotData.provider_code,
-        gameCode: slotData.game_code,
-        txnType,
-        betCents,
-        winCents,
-        balanceAfterReais: newBalance
-      })
-
-      return res.json({ status: 1, user_balance: Math.round(newBalance * 100) })
-    }
-
-    return res.status(400).json({ status: 0, msg: 'INVALID_METHOD' })
-  } catch (error) {
-    console.error('Seamless API error:', error)
-    return res.status(500).json({ status: 0, msg: 'INTERNAL_ERROR' })
-  }
-})
+// @desc    API Link Guide: Seamless Site API - user_balance & transaction
+router.use('/seamless', seamlessRoutes)
 
 // @route   GET /api/games/balance
 // @desc    Seamless: retorna saldo do usuário (nosso DB)

@@ -1,4 +1,5 @@
 import axios from 'axios'
+import GameConfig from '../models/GameConfig.model.js'
 
 const IGAMEWIN_API_URL = 'https://igamewin.com/api/v1'
 
@@ -12,11 +13,27 @@ function isSamplesMode() {
   return v === 'true' || v === '1' || v === 'yes'
 }
 
+/** API Link Guide: agent_code 4916vini, agent_token 2b887a93fcbd11f098a0bc2411881493 */
+const DEFAULT_AGENT_CODE = '4916vini'
+const DEFAULT_AGENT_TOKEN = '2b887a93fcbd11f098a0bc2411881493'
+
 class IGameWinService {
   constructor() {
-    this.agentCode = process.env.IGAMEWIN_AGENT_CODE || 'Midaslabs'
-    this.agentToken = process.env.IGAMEWIN_AGENT_TOKEN || '092b6406e28211f0b8f1bc2411881493'
-    this.agentSecret = process.env.IGAMEWIN_AGENT_SECRET || '19e4c979a7a5a4f70ffc30b510312317'
+    this.agentCode = process.env.IGAMEWIN_AGENT_CODE || DEFAULT_AGENT_CODE
+    this.agentToken = process.env.IGAMEWIN_AGENT_TOKEN || DEFAULT_AGENT_TOKEN
+    this.agentSecret = process.env.IGAMEWIN_AGENT_SECRET || ''
+  }
+
+  async _getCredentials() {
+    try {
+      const config = await GameConfig.getConfig()
+      if (config?.agentCode && config?.agentToken) {
+        return { agentCode: config.agentCode, agentToken: config.agentToken }
+      }
+    } catch (e) {
+      // fallback to env
+    }
+    return { agentCode: this.agentCode, agentToken: this.agentToken }
   }
 
   isSamplesMode() {
@@ -25,10 +42,11 @@ class IGameWinService {
 
   async makeRequest(method, params = {}) {
     try {
+      const { agentCode, agentToken } = await this._getCredentials()
       const payload = {
         method,
-        agent_code: this.agentCode,
-        agent_token: this.agentToken,
+        agent_code: agentCode,
+        agent_token: agentToken,
         ...params
       }
 

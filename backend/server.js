@@ -14,6 +14,7 @@ import paymentRoutes from './routes/payment.routes.js'
 import webhookRoutes from './routes/webhook.routes.js'
 import adminRoutes from './routes/admin.routes.js'
 import gamesRoutes from './routes/games.routes.js'
+import seamlessRoutes from './routes/seamless.routes.js'
 import gatewayRoutes from './routes/gateway.routes.js'
 import themeRoutes from './routes/theme.routes.js'
 import chestRoutes from './routes/chest.routes.js'
@@ -56,6 +57,15 @@ app.use(cors({
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
+
+// API Link Guide: Site EndPoint - user_balance & transaction (CORS permissivo para jogo iframe)
+// O painel iGameWin aceita só a base (ex: https://api.midas777.fun). Oferecemos:
+// - POST / (raiz) - quando o painel aceita só a base
+// - POST /gold_api - se o painel permitir path
+// - POST /api/games/seamless - alternativa
+app.post('/', cors({ origin: true, credentials: false }), seamlessRoutes)
+app.use('/gold_api', cors({ origin: true, credentials: false }), seamlessRoutes)
+app.use('/api/games/seamless', cors({ origin: true, credentials: false }), seamlessRoutes)
 
 // Serve uploaded images - use UPLOADS_PATH if set (for persistent storage volume mount)
 const uploadsPath = process.env.UPLOADS_PATH || path.join(__dirname, 'uploads')

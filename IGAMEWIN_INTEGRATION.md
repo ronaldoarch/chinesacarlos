@@ -63,4 +63,4 @@ IGAMEWIN_SAMPLES_MODE=true
 
 - **INSUFFICIENT_USER_FUNDS**: Saldo insuficiente para a aposta.
 - **INVALID_USER**: `user_code` não encontrado (deve ser o `_id` do usuário).
-- **INVALID_AGENT**: `agent_secret` incorreto.
+- **INVALID_AGENT** / **secretMatch: false**: O `agent_secret` não confere. Em **Admin → Configuração de Jogos**, preencha o campo **Agent Secret** com o valor exato do painel iGameWin para o agente 4916vini (vinichinesa).

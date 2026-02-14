@@ -50,10 +50,22 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }))
 
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+// CORS: supports single FRONTEND_URL or multiple CORS_ORIGINS (comma-separated)
+const corsOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
+  : (process.env.FRONTEND_URL || 'http://localhost:3000').split(',').map((o) => o.trim()).filter(Boolean)
+const corsOptions = {
+  origin: corsOrigins.length === 1 ? corsOrigins[0] : (origin, cb) => {
+    if (!origin || corsOrigins.includes(origin)) {
+      cb(null, true)
+    } else {
+      cb(null, false)
+    }
+  },
   credentials: true
-}))
+}
+app.use(cors(corsOptions))
+console.log('🔒 CORS allowed origins:', corsOrigins)
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))

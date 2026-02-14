@@ -102,13 +102,21 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 
 ### 6. FRONTEND_URL
 **O que é:** URL do frontend (usado para CORS)
-**Formato:** URL completa do seu frontend no Colify
-**Exemplo:** `FRONTEND_URL=https://fortune-bet-frontend.colify.app`
+**Formato:** URL completa do seu frontend
+**Exemplo:** `FRONTEND_URL=https://nakasbet.com.br`
 
 **⚠️ IMPORTANTE:**
 - Use HTTPS em produção
 - Sem barra no final
 - Sem `/api` no final (só a URL base)
+- **Para múltiplos domínios**, use `CORS_ORIGINS` (veja abaixo)
+
+### 6b. CORS_ORIGINS (opcional)
+**O que é:** Lista de URLs permitidas para CORS (quando o backend serve vários frontends)
+**Formato:** URLs separadas por vírgula
+**Exemplo:** `CORS_ORIGINS=https://nakasbet.com.br,https://www.nakasbet.com.br,https://outro-site.com.br`
+
+**Quando usar:** Se `FRONTEND_URL` não for suficiente (ex: site com www e sem www, ou múltiplos clientes)
 
 ---
 
@@ -187,9 +195,11 @@ Antes de fazer deploy, verifique:
 - Verifique se a senha está correta
 
 ### Erro de CORS
-- Verifique se `FRONTEND_URL` está correto
+- Verifique se `FRONTEND_URL` está correto (ex: `https://nakasbet.com.br`)
 - Verifique se não tem barra no final
 - Verifique se está usando HTTPS
+- **Para nakasbet.com.br:** adicione `FRONTEND_URL=https://nakasbet.com.br` no backend
+- **Múltiplos domínios:** use `CORS_ORIGINS=https://nakasbet.com.br,https://www.nakasbet.com.br`
 
 ### Webhooks não funcionam
 - Verifique se `WEBHOOK_BASE_URL` está correto

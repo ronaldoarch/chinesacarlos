@@ -57,10 +57,15 @@ Verifique nos logs do backend se aparece:
 No backend, verifique se `FRONTEND_URL` está correto:
 
 ```env
-FRONTEND_URL=https://seu-frontend.colify.app
+FRONTEND_URL=https://nakasbet.com.br
 ```
 
 **Sem barra no final!**
+
+**Erro "blocked by CORS policy: No 'Access-Control-Allow-Origin' header":**
+- O backend precisa incluir a URL exata do frontend em `FRONTEND_URL`
+- Ex: frontend em `https://nakasbet.com.br` → `FRONTEND_URL=https://nakasbet.com.br`
+- Para múltiplos domínios: `CORS_ORIGINS=https://nakasbet.com.br,https://www.nakasbet.com.br`
 
 ---
 

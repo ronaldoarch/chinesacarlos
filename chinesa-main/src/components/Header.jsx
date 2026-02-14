@@ -4,7 +4,7 @@ import './Header.css'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 const getImageUrl = (imagePath) => {
-  if (!imagePath) return '/logo_plataforma.png'
+  if (!imagePath) return '/logo_plataforma.svg'
   const baseUrl = API_BASE_URL.replace(/\/api\/?$/, '')
   if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) return imagePath
   if (imagePath.startsWith('/uploads')) return `${baseUrl}${imagePath}`
@@ -12,6 +12,8 @@ const getImageUrl = (imagePath) => {
   if (uploadsIndex !== -1) return `${baseUrl}${imagePath.slice(uploadsIndex)}`
   return imagePath
 }
+
+const DEFAULT_SITE_NAME = 'NAKASBET'
 
 function Header({
   onRegisterClick,
@@ -24,28 +26,39 @@ function Header({
   balance = 'R$ 0,00'
 }) {
   const [isRefreshing, setIsRefreshing] = useState(false)
-  const [logoUrl, setLogoUrl] = useState('/logo_plataforma.png')
+  const [logoUrl, setLogoUrl] = useState(null)
   const [logoError, setLogoError] = useState(false)
+  const [siteName, setSiteName] = useState(DEFAULT_SITE_NAME)
+  const [useTextLogo, setUseTextLogo] = useState(true) // true = mostra nome da plataforma até carregar logo da API
 
   useEffect(() => {
-    loadLogo()
+    loadLogoAndSiteConfig()
   }, [])
 
   const handleLogoError = () => {
     setLogoError(true)
-    setLogoUrl('/logo_plataforma.png')
+    setUseTextLogo(true)
   }
 
-  const loadLogo = async () => {
+  const loadLogoAndSiteConfig = async () => {
     try {
       setLogoError(false)
-      const response = await api.getLogo()
-      if (response.success && response.data.logo) {
-        setLogoUrl(response.data.logo.imageUrl)
+      const [logoRes, configRes] = await Promise.all([
+        api.getLogo(),
+        api.getSiteConfig().catch(() => ({ success: false }))
+      ])
+      if (configRes.success && configRes.data?.siteName) {
+        setSiteName(configRes.data.siteName.trim() || DEFAULT_SITE_NAME)
+      }
+      if (logoRes.success && logoRes.data?.logo?.imageUrl) {
+        setLogoUrl(logoRes.data.logo.imageUrl)
+        setUseTextLogo(false)
+      } else {
+        setUseTextLogo(true)
       }
     } catch (error) {
       console.error('Error loading logo:', error)
-      setLogoUrl('/logo_plataforma.png')
+      setUseTextLogo(true)
     }
   }
 
@@ -81,13 +94,19 @@ function Header({
           </g>
         </svg>
         <a href="#" className="logo-link">
-          <img
-            src={getImageUrl(logoError ? '/logo_plataforma.png' : logoUrl)}
-            alt="Logo"
-            className="logo-img"
-            loading="lazy"
-            onError={handleLogoError}
-          />
+          {useTextLogo || logoError ? (
+            <span className="logo-text-plataforma">
+              {siteName}
+            </span>
+          ) : (
+            <img
+              src={getImageUrl(logoUrl)}
+              alt={siteName}
+              className="logo-img"
+              loading="lazy"
+              onError={handleLogoError}
+            />
+          )}
         </a>
       </div>
       <div className={`header-right${isLoggedIn ? ' is-logged-in' : ''}`}>

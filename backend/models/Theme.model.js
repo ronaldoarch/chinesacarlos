@@ -39,7 +39,7 @@ const themeSchema = new mongoose.Schema(
     },
     icons: {
       // Store icon paths/URLs if needed
-      logo: { type: String, default: '/logo_plataforma.png' },
+      logo: { type: String, default: '/logo_plataforma.svg' },
       // Add more icon references as needed
     },
     createdAt: {

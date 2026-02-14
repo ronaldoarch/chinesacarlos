@@ -4,7 +4,7 @@ import api from '../services/api'
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
 const getImageUrl = (imagePath) => {
-  if (!imagePath) return '/logo_plataforma.png'
+  if (!imagePath) return '/logo_plataforma.svg'
   const baseUrl = API_BASE_URL.replace(/\/api\/?$/, '')
   if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) return imagePath
   if (imagePath.startsWith('/uploads')) return `${baseUrl}${imagePath}`
@@ -40,12 +40,12 @@ export const useFavicon = () => {
           updateFavicon(logoUrl)
         } else {
           // Usa logo padrão se não houver logo da API
-          updateFavicon('/logo_plataforma.png')
+          updateFavicon('/logo_plataforma.svg')
         }
       } catch (error) {
         console.error('Error loading logo for favicon:', error)
         // Usa logo padrão em caso de erro
-        updateFavicon('/logo_plataforma.png')
+        updateFavicon('/logo_plataforma.svg')
       }
     }
     

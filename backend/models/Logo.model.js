@@ -38,7 +38,7 @@ logoSchema.statics.getActiveLogo = async function () {
   if (!logo) {
     // Create default logo if none exists
     logo = await this.create({
-      imageUrl: '/logo_plataforma.png',
+      imageUrl: '/logo_plataforma.svg',
       altText: 'Logo',
       isActive: true
     })

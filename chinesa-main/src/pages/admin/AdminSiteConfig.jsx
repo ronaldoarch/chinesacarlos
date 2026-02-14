@@ -7,7 +7,7 @@ function AdminSiteConfig() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
-  const [siteName, setSiteName] = useState('FORTUNEBET')
+  const [siteName, setSiteName] = useState('NAKASBET')
 
   useEffect(() => {
     loadConfig()
@@ -18,7 +18,7 @@ function AdminSiteConfig() {
       setLoading(true)
       const res = await api.getSiteConfig()
       if (res.success && res.data) {
-        setSiteName(res.data.siteName || 'FORTUNEBET')
+        setSiteName(res.data.siteName || 'NAKASBET')
       }
     } catch (err) {
       setError(err.message || 'Erro ao carregar configuração')
@@ -33,10 +33,10 @@ function AdminSiteConfig() {
       setSaving(true)
       setError(null)
       setSuccess(null)
-      const res = await api.updateSiteConfig({ siteName: siteName.trim() || 'FORTUNEBET' })
+      const res = await api.updateSiteConfig({ siteName: siteName.trim() || 'NAKASBET' })
       if (res.success) {
         setSuccess('Nome do site salvo! O título da aba do navegador será atualizado.')
-        document.title = siteName.trim() || 'FORTUNEBET'
+        document.title = siteName.trim() || 'NAKASBET'
         setTimeout(() => setSuccess(null), 4000)
       } else {
         setError(res.message || 'Erro ao salvar')
@@ -79,7 +79,7 @@ function AdminSiteConfig() {
             <input
               id="siteName"
               type="text"
-              placeholder="Ex: FORTUNEBET"
+              placeholder="Ex: NAKASBET"
               maxLength={80}
               value={siteName}
               onChange={(e) => setSiteName(e.target.value)}

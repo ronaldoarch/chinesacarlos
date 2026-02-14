@@ -177,7 +177,7 @@ Após tentar novamente, verifique:
 
 3. **Health Check:**
    - Acesse: `https://seu-backend.com/api/health`
-   - Deve retornar: `{"status":"OK","message":"FortuneBet API is running"}`
+   - Deve retornar: `{"status":"OK","message":"NAKASBET API is running"}`
 
 ---
 

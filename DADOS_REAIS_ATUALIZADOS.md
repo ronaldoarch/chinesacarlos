@@ -72,7 +72,7 @@ Todos os componentes que usavam dados hardcoded/mockados foram atualizados para 
 
 ### 5. ✅ InviteModal.jsx
 **Antes:**
-- Link de convite hardcoded: `'https://fortunebet.win/?ref=2ea83'`
+- Link de convite hardcoded: `'https://nakasbet.com.br/?ref=2ea83'`
 - Saldo hardcoded: `'R$ 0,00'`
 
 **Depois:**

@@ -1,4 +1,4 @@
-# FortuneBet - Plataforma de Jogos e Apostas
+# NAKASBET - Plataforma de Jogos e Apostas
 
 Plataforma completa de jogos e apostas com sistema de pagamentos PIX integrado.
 

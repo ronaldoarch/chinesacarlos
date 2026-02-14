@@ -1,6 +1,6 @@
-# FortuneBet Backend
+# NAKASBET Backend
 
-Backend API para plataforma FortuneBet
+Backend API para plataforma NAKASBET
 
 ## Instalação
 

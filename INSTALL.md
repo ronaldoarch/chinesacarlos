@@ -1,6 +1,6 @@
-# Guia de Instalação - FortuneBet
+# Guia de Instalação - NAKASBET
 
-Este guia irá ajudá-lo a configurar tanto o backend quanto o frontend da aplicação FortuneBet.
+Este guia irá ajudá-lo a configurar tanto o backend quanto o frontend da aplicação NAKASBET.
 
 ## Pré-requisitos
 

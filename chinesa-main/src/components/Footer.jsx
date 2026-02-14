@@ -20,10 +20,10 @@ function Footer() {
           <div className="footer-col">
             <h5 className="footer-title">Jogos</h5>
             <ul className="footer-links">
-              <li><a href="https://fortunebet.win/games">Todos</a></li>
-              <li><a href="https://fortunebet.win/games">Slots</a></li>
-              <li><a href="https://fortunebet.win/games?recents=true">Recentes</a></li>
-              <li><a href="https://fortunebet.win/games?favorites=true">Favoritos</a></li>
+              <li><a href="https://nakasbet.com.br/games">Todos</a></li>
+              <li><a href="https://nakasbet.com.br/games">Slots</a></li>
+              <li><a href="https://nakasbet.com.br/games?recents=true">Recentes</a></li>
+              <li><a href="https://nakasbet.com.br/games?favorites=true">Favoritos</a></li>
             </ul>
           </div>
           <div className="footer-col">

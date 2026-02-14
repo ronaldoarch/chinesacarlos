@@ -1,6 +1,6 @@
-# FortuneBet Frontend
+# NAKASBET Frontend
 
-Plataforma de jogos FortuneBet - Frontend React
+Plataforma de jogos NAKASBET - Frontend React
 
 ## Instalação
 

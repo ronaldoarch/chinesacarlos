@@ -124,7 +124,7 @@ app.use('/api/site-config', siteConfigRoutes)
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'FortuneBet API is running' })
+  res.json({ status: 'OK', message: 'NAKASBET API is running' })
 })
 
 // Error handling middleware

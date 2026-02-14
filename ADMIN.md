@@ -1,8 +1,8 @@
-# Painel Administrativo - FortuneBet
+# Painel Administrativo - NAKASBET
 
 ## Visão Geral
 
-O painel administrativo permite gerenciar todos os aspectos da plataforma FortuneBet, incluindo usuários, transações, depósitos e saques.
+O painel administrativo permite gerenciar todos os aspectos da plataforma NAKASBET, incluindo usuários, transações, depósitos e saques.
 
 ## Acesso
 

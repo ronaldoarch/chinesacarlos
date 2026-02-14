@@ -1,7 +1,7 @@
 {
   "name": "fortune-bet-frontend",
   "version": "1.0.0",
-  "description": "Plataforma de jogos FortuneBet",
+  "description": "Plataforma de jogos NAKASBET",
   "main": "index.js",
   "scripts": {
     "dev": "vite",

@@ -14,7 +14,7 @@ router.get('/', async (req, res) => {
     res.json({
       success: true,
       data: {
-        siteName: config.siteName || 'FORTUNEBET'
+        siteName: config.siteName || 'NAKASBET'
       }
     })
   } catch (error) {
@@ -35,9 +35,9 @@ router.put('/', protect, isAdmin, async (req, res) => {
     const { siteName } = req.body
     let config = await SiteConfig.findOne()
     if (!config) {
-      config = await SiteConfig.create({ siteName: siteName != null ? String(siteName).trim() : 'FORTUNEBET' })
+      config = await SiteConfig.create({ siteName: siteName != null ? String(siteName).trim() : 'NAKASBET' })
     } else {
-      if (siteName !== undefined) config.siteName = String(siteName).trim() || 'FORTUNEBET'
+      if (siteName !== undefined) config.siteName = String(siteName).trim() || 'NAKASBET'
       await config.save()
     }
     res.json({

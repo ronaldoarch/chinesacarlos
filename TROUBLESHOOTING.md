@@ -81,7 +81,7 @@ curl https://seu-backend.colify.app/api/health
 
 **Resposta esperada:**
 ```json
-{"status":"OK","message":"FortuneBet API is running"}
+{"status":"OK","message":"NAKASBET API is running"}
 ```
 
 Se retornar 404, o backend não está rodando ou a URL está errada.

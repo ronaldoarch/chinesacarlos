@@ -5,7 +5,7 @@ const siteConfigSchema = new mongoose.Schema(
     siteName: {
       type: String,
       trim: true,
-      default: 'FORTUNEBET',
+      default: 'NAKASBET',
       maxlength: [80, 'Nome do site muito longo']
     }
   },
@@ -15,7 +15,7 @@ const siteConfigSchema = new mongoose.Schema(
 siteConfigSchema.statics.getConfig = async function () {
   let config = await this.findOne()
   if (!config) {
-    config = await this.create({ siteName: 'FORTUNEBET' })
+    config = await this.create({ siteName: 'NAKASBET' })
   }
   return config
 }

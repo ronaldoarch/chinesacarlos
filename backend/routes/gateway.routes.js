@@ -120,7 +120,8 @@ router.post('/test', protect, isAdmin, async (req, res) => {
         })
       }
       const data = result.data || {}
-      const hasCode = data.qrCode || data.pixCopyPaste || data.copyPaste || data.paymentCode || data.qr_code || data.qrcode || data.codigo_pix
+      const raw = data.data || data
+      const hasCode = data.key || raw?.key || data.qrCode || data.pixCopyPaste || data.copyPaste || data.paymentCode || data.qr_code || data.qrcode || data.codigo_pix || raw?.qrCode || raw?.pixCopyPaste || raw?.copyPaste
       if (!hasCode) {
         console.warn('GATEBOX test response (no PIX code found):', JSON.stringify(result.data, null, 2))
         return res.status(400).json({

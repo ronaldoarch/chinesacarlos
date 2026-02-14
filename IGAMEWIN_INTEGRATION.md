@@ -24,11 +24,11 @@ IGAMEWIN_SAMPLES_MODE=false
 ## Configuração no painel iGameWin
 
 - **API Type:** Seamless Mode
-- **Site EndPoint:** O painel aceita só a base. Coloque:
+- **Site EndPoint:** O painel aceita só a base. Coloque a URL do seu backend, ex:
   ```
-  https://api.midas777.fun
+  https://api.nakasbet.com.br
   ```
-- A iGameWin completa com `/gold_api` — chama `POST https://api.midas777.fun/gold_api` para user_balance e transaction. Nosso backend responde em `/gold_api` e em `/` (raiz).
+- A iGameWin completa com `/gold_api` — chama `POST https://api.nakasbet.com.br/gold_api` para user_balance e transaction. Nosso backend responde em `/gold_api` e em `/` (raiz).
 
 ## Fluxo Seamless
 

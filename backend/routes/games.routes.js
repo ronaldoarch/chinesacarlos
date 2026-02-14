@@ -299,7 +299,7 @@ router.post('/launch', protect, async (req, res) => {
     } else {
       const msg = response.msg || 'Erro ao lançar jogo'
       if (msg === 'ERROR_GET_BALANCE_END_POINT') {
-        console.warn('iGameWin ERROR_GET_BALANCE_END_POINT: verifique Site EndPoint no painel (ex: https://api.midas777.fun ou https://api.midas777.fun/api)')
+        console.warn('iGameWin ERROR_GET_BALANCE_END_POINT: configure Site EndPoint no painel iGameWin com a URL do seu backend (ex: https://api.nakasbet.com.br)')
       }
       res.status(400).json({
         success: false,

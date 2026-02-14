@@ -107,7 +107,7 @@ router.post('/test', protect, isAdmin, async (req, res) => {
       const webhookBase = config.webhookBaseUrl || process.env.WEBHOOK_BASE_URL || 'http://localhost:5000'
       const result = await gateboxService.generatePix({
         nome_pagador: 'Teste Admin',
-        documento_pagador: '00000000000',
+        documento_pagador: '11144477735', // CPF válido para testes (Gatebox rejeita 00000000000)
         valor: 10,
         webhook: `${webhookBase}/api/webhooks/pix`,
         externalId: `test_${Date.now()}`

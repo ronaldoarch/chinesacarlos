@@ -17,6 +17,7 @@ const authLimiter = rateLimit({
   message: 'Muitas tentativas. Tente novamente em 15 minutos.',
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { trustProxy: false }, // Evita ERR_ERL_PERMISSIVE_TRUST_PROXY quando trust proxy está ativo
 })
 
 // @route   POST /api/auth/register

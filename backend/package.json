@@ -8,6 +8,7 @@
     "dev": "node --watch server.js",
     "start": "node server.js",
     "create-admin": "node scripts/createAdmin.js",
+    "reset-admin-password": "node scripts/resetAdminPassword.js",
     "list-users": "node scripts/listUsers.js",
     "check-user": "node scripts/checkUser.js",
     "test": "echo \"Error: no test specified\" && exit 1"

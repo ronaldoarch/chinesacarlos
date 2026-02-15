@@ -271,8 +271,11 @@ async function processDepositWebhook(body, transaction) {
   } else if (rawStatus === 'FAILED' || rawStatus === 'ERROR' || rawStatus === 'REJECTED' || rawStatus === 'REFUSED') {
     paymentStatus = 'failed'
   }
+  // Evitar processar o mesmo depósito duas vezes (webhook duplicado)
+  const wasAlreadyPaid = transaction.status === 'paid'
   await transaction.updateStatus(paymentStatus, webhookData)
-  if (paymentStatus === 'paid' && transaction.type === 'deposit') {
+
+  if (paymentStatus === 'paid' && transaction.type === 'deposit' && !wasAlreadyPaid) {
     const user = await User.findById(transaction.user)
     if (user) {
       const isFirstDeposit = user.totalDeposits === 0
@@ -287,6 +290,9 @@ async function processDepositWebhook(body, transaction) {
       await affiliateService.updateVipLevel(user._id)
       if (user.referredBy) await processAffiliateCommissions(user, transaction, depositAmount, isFirstDeposit)
       if (isFirstDeposit) facebookService.sendFirstDeposit(user, depositAmount, 'BRL').catch(() => {})
+      if (bonusAmount > 0) {
+        console.log(`Webhook PIX (depósito): Bônus de R$ ${bonusAmount.toFixed(2)} aplicado (1º depósito: ${isFirstDeposit}, valor: R$ ${depositAmount})`)
+      }
     }
   }
   console.log(`Webhook PIX (depósito): Transação ${transaction.idTransaction} atualizada para ${paymentStatus}`)
